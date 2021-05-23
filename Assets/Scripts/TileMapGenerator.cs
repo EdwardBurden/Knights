@@ -21,7 +21,7 @@ public class TileMapGenerator : MonoBehaviour
 
 
 	public int room_Deviation = 1;
-
+	const int MAX_ATTEMPTS = 5;
 
 	public int minRoomWidth;
 	public int meanRoomWidth;
@@ -64,7 +64,7 @@ public class TileMapGenerator : MonoBehaviour
 	{
 		//data
 		WorldData worldData = new WorldData();
-		worldData.rooms = GenerateRooms(roomsAmount);
+		worldData.rooms = GenerateRooms();
 
 		Dictionary<int, Tilemap> depthTilemaps = new Dictionary<int, Tilemap>();
 
@@ -88,6 +88,11 @@ public class TileMapGenerator : MonoBehaviour
 	private void AddRoomToTileMap(Tilemap tilemap, TileMapRoom room)
 	{
 		Color color = new Color((float)room.depth / (float)depth, 0, 0);
+		if (room.main)
+		{
+			color = Color.green;
+		}
+		//Color color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), 1, 1);
 		for (int x = 0; x < room.width; x++)
 		{
 			for (int y = 0; y < room.height; y++)
@@ -110,7 +115,7 @@ public class TileMapGenerator : MonoBehaviour
 		return tilemap;
 	}
 
-	private List<TileMapRoom> GenerateRooms(int amount)
+	private List<TileMapRoom> GenerateRooms()
 	{
 		float minDist = Vector2Int.Distance(startposition, GetStartPosition());
 		float maxDist = Vector2Int.Distance(startposition, new Vector2Int(GetStartPosition().x + width, GetStartPosition().y + height));
@@ -118,23 +123,93 @@ public class TileMapGenerator : MonoBehaviour
 		List<TileMapRoom> tileMapRooms = new List<TileMapRoom>();
 		for (int room = 0; room < roomsAmount; room++)
 		{
-			tileMapRooms.Add(GenerateRoom(maxDistance));
+			tileMapRooms.Add(GenerateRoom(room));
 		}
+
+		int[,] gridPlaced = new int[width, height];
+		for (int i = tileMapRooms.Count - 1; i >= 0; i--)
+		{
+			if (!AttempToPlace(tileMapRooms[i], ref gridPlaced, maxDistance))
+			{
+				tileMapRooms.RemoveAt(i);
+			}
+		}
+
 		return tileMapRooms;
 	}
 
-	private TileMapRoom GenerateRoom(float maxDistance)
+	private TileMapRoom GenerateRoom(int id)
 	{
-		TileMapRoom tileMapRoom = new TileMapRoom();
-
+		TileMapRoom tileMapRoom = new TileMapRoom(id);
 		tileMapRoom.width = (int)NextGaussian(meanRoomWidth, room_Deviation, minRoomWidth, maxRoomWidth);
 		tileMapRoom.height = (int)NextGaussian(meanRoomHeight, room_Deviation, minRoomHeight, maxRoomHeight);
-		tileMapRoom.position = new Vector2Int(Random.Range(0, width), Random.Range(0, height));
+		tileMapRoom.main = tileMapRoom.width * 1.25 > meanRoomWidth && tileMapRoom.height * 1.25 > meanRoomHeight;
+		return tileMapRoom;
+	}
 
+	private bool AttempToPlace(TileMapRoom tileMapRoom, ref int[,] gridPlaced, float maxDistance)
+	{
+		bool canPlace = false;
+		int attmepts = 0;
+		Vector2Int position = Vector2Int.zero;
+		while (attmepts < MAX_ATTEMPTS && !canPlace)
+		{
+			position = new Vector2Int(Random.Range(0, width), Random.Range(0, height));
+			canPlace = CanPlaceRoom(tileMapRoom, gridPlaced, position);
+			attmepts++;
+		}
+
+		if (canPlace)
+		{
+			PlaceRoom(tileMapRoom, ref gridPlaced, position);
+			SetDepth(tileMapRoom, maxDistance);
+			Debug.Log("Placed");
+			return true;
+		}
+		else
+		{
+			Debug.Log("Could Not place");
+			return false;
+		}
+	}
+
+	private void PlaceRoom(TileMapRoom tileMapRoom, ref int[,] gridPlaced, Vector2Int position)
+	{
+		tileMapRoom.position = position;
+		for (int i = 0; i < tileMapRoom.width; i++)
+		{
+			for (int j = 0; j < tileMapRoom.height; j++)
+			{
+				gridPlaced[position.x + i, position.y + j] = 1;
+			}
+		}
+	}
+
+	private bool CanPlaceRoom(TileMapRoom tileMapRoom, int[,] gridPlaced, Vector2Int position)
+	{
+		for (int i = 0; i < tileMapRoom.width; i++)
+		{
+			for (int j = 0; j < tileMapRoom.height; j++)
+			{
+				if (position.x + i >= width || position.y + j >= height)
+				{
+					return false;
+				}
+
+				if (gridPlaced[position.x + i, position.y + j] == 1)
+				{
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	private void SetDepth(TileMapRoom tileMapRoom, float maxDistance)
+	{
 		float dist = Vector2Int.Distance(startposition, (Vector2Int)tileMapRoom.position + GetStartPosition());
 		int inverse = topDepthAtStart ? 1 : 0;
 		tileMapRoom.depth = Mathf.RoundToInt(Mathf.Abs(inverse - (dist / maxDistance)) * depth);
-		return tileMapRoom;
 	}
 
 
@@ -167,6 +242,13 @@ public class TileMapGenerator : MonoBehaviour
 		return mean + NextGaussian() * standard_deviation;
 	}
 
+	public void ChangeActiveLayer(Tilemap tilemap)
+	{
+		foreach (Transform item in grid.transform)
+		{
+			item.gameObject.SetActive(!(item.position.z < tilemap.transform.position.z));
+		}
+	}
 	private void Update()
 	{
 		/*if (Input.GetMouseButtonDown(0))
