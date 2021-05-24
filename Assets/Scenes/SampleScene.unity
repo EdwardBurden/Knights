@@ -659,8 +659,8 @@ MonoBehaviour:
   tileMapPrefab: {fileID: 9168229525736065504, guid: e0181aa639bd9f748bec6757f2909069,
     type: 3}
   groundTile: {fileID: 11400000, guid: 3cdaf3943cb5ad447813ab19354b5816, type: 2}
-  width: 20
-  height: 20
+  width: 100
+  height: 100
   depth: 5
   room_Deviation: 1
   minRoomWidth: 1
@@ -669,7 +669,7 @@ MonoBehaviour:
   minRoomHeight: 1
   meanRoomHeight: 5
   maxRoomHeight: 10
-  roomsAmount: 100
+  roomsAmount: 70
 --- !u!156049354 &2027787174
 Grid:
   m_ObjectHideFlags: 0

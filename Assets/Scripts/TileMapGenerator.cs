@@ -33,6 +33,10 @@ public class TileMapGenerator : MonoBehaviour
 
 	public int roomsAmount;
 
+	private List<Triangle> triangles = new List<Triangle>();
+
+	Dictionary<int, Tilemap> depthTilemaps = new Dictionary<int, Tilemap>();
+
 	private void Awake()
 	{
 		Generate();
@@ -66,8 +70,7 @@ public class TileMapGenerator : MonoBehaviour
 		WorldData worldData = new WorldData();
 		worldData.rooms = GenerateRooms();
 
-		Dictionary<int, Tilemap> depthTilemaps = new Dictionary<int, Tilemap>();
-
+		depthTilemaps.Clear();
 		foreach (Transform map in grid.transform)
 		{
 			Destroy(map.gameObject);
@@ -83,6 +86,29 @@ public class TileMapGenerator : MonoBehaviour
 			}
 			AddRoomToTileMap(tilemap, room);
 		}
+
+		//convex
+		//vertices = JarvisMarchAlgorithm.GetConvexHull(worldData.rooms.Where(x => x.main).Select(x => new Vertex(x.centerPosition)).ToList());
+		triangles = Triangulation.TriangulateByFlippingEdges(worldData.rooms.Where(x => x.main).Select(x => (Vector3)x.centerPosition).ToList());
+	}
+
+	private void OnDrawGizmos()
+	{
+		foreach (Triangle triangle in triangles)
+		{
+			Gizmos.DrawLine(VertexToWorld(triangle.v1), VertexToWorld(triangle.v2));
+			Gizmos.DrawLine(VertexToWorld(triangle.v1), VertexToWorld(triangle.v3));
+			Gizmos.DrawLine(VertexToWorld(triangle.v2), VertexToWorld(triangle.v3));
+			//Vector3 vector3 = depthTilemaps[0].GetCellCenterWorld(new Vector3Int((int)vertex.position.x + GetStartPosition().x, (int)vertex.position.y + GetStartPosition().y, (int)vertex.position.z));
+			//vector3 += new Vector3(GetStartPosition().x, GetStartPosition().y, 0);
+			//Gizmos.DrawSphere(vector3, 1);
+		}
+
+	}
+
+	private Vector3 VertexToWorld(Vertex vertex)
+	{
+		return depthTilemaps[0].GetCellCenterWorld(new Vector3Int((int)vertex.position.x + GetStartPosition().x, (int)vertex.position.y + GetStartPosition().y, (int)vertex.position.z));
 	}
 
 	private void AddRoomToTileMap(Tilemap tilemap, TileMapRoom room)
