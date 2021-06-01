@@ -1,8 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Triangulation;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using static MinimumGraph;
 
 public class TileMapGenerator : MonoBehaviour
 {
@@ -33,9 +35,14 @@ public class TileMapGenerator : MonoBehaviour
 
 	public int roomsAmount;
 
-	private List<Triangle> triangles = new List<Triangle>();
+	private List<Triangle> triangulation = new List<Triangle>();
+	private List<HalfEdge> minimumTree = new List<HalfEdge>();
+	List<HalfEdge> allEdges = new List<HalfEdge>();
 
 	Dictionary<int, Tilemap> depthTilemaps = new Dictionary<int, Tilemap>();
+
+	public bool show;
+
 
 	private void Awake()
 	{
@@ -64,6 +71,8 @@ public class TileMapGenerator : MonoBehaviour
 	}
 
 
+
+
 	public void Generate()
 	{
 		//data
@@ -76,6 +85,37 @@ public class TileMapGenerator : MonoBehaviour
 			Destroy(map.gameObject);
 		}
 
+
+
+		bool success = TriangulationWrapper.Triangulate(worldData.rooms.Select(x => x.centerPosition).ToList(), out List<int> indices, out List<Vector3> vertices);
+
+
+		//convex
+		//Debug.Log("Rooms:" + worldData.rooms.Count);
+		//triangulation = Triangulation.Triangulation.TriangulateByFlippingEdges(worldData.rooms);
+		//Debug.Log("Vertex:" + triangulation.SelectMany(x => x.GetVertex()).Distinct().Count());
+		//Debug.Log("Triangles:" + triangulation.Count);
+		Graph Graph = new Graph(triangulation, worldData.rooms.Count);
+		//Debug.Log("Graph:Edges:" + Graph.edges.Count());
+		//Debug.Log("Graph:EdgesCount:" + Graph.edgesCount);
+		//Debug.Log("Graph:verticesCount:" + Graph.verticesCount);
+		minimumTree = MinimumGraph.Kruskal(Graph).Select(x => x.edge).ToList();
+		
+
+		 allEdges = new List<HalfEdge>();
+		for (int i = 0; i < triangulation.Count; i++)
+		{
+			if (triangulation[i].halfEdge != null)
+			{
+				AddToList(allEdges, triangulation[i].halfEdge);
+				AddToList(allEdges, triangulation[i].halfEdge.prevEdge);
+				AddToList(allEdges, triangulation[i].halfEdge.nextEdge);
+
+			}
+		}
+
+
+
 		//display
 		foreach (TileMapRoom room in worldData.rooms)
 		{
@@ -87,28 +127,48 @@ public class TileMapGenerator : MonoBehaviour
 			AddRoomToTileMap(tilemap, room);
 		}
 
-		//convex
-		//vertices = JarvisMarchAlgorithm.GetConvexHull(worldData.rooms.Where(x => x.main).Select(x => new Vertex(x.centerPosition)).ToList());
-		triangles = Triangulation.TriangulateByFlippingEdges(worldData.rooms.Where(x => x.main).Select(x => (Vector3)x.centerPosition).ToList());
+
+	}
+	private static void AddToList(List<HalfEdge> allEdges, HalfEdge halfEdge)
+	{
+		if (allEdges.Contains(halfEdge))
+		{
+			return;
+		}
+		if (halfEdge.oppositeEdge != null && allEdges.Contains(halfEdge.oppositeEdge))
+		{
+			allEdges.Add(halfEdge);
+		}
+		allEdges.Add(halfEdge);
+
+
 	}
 
 	private void OnDrawGizmos()
 	{
-		foreach (Triangle triangle in triangles)
+
+		foreach (HalfEdge halfedge in allEdges)
 		{
-			Gizmos.DrawLine(VertexToWorld(triangle.v1), VertexToWorld(triangle.v2));
-			Gizmos.DrawLine(VertexToWorld(triangle.v1), VertexToWorld(triangle.v3));
-			Gizmos.DrawLine(VertexToWorld(triangle.v2), VertexToWorld(triangle.v3));
+			Gizmos.color = Color.blue;
+			Gizmos.DrawLine(VertexToWorld(halfedge.prevEdge.v), VertexToWorld(halfedge.v));
+			//Gizmos.DrawLine(VertexToWorld(triangle.v1), VertexToWorld(triangle.v3));
+			//Gizmos.DrawLine(VertexToWorld(triangle.v2), VertexToWorld(triangle.v3));
 			//Vector3 vector3 = depthTilemaps[0].GetCellCenterWorld(new Vector3Int((int)vertex.position.x + GetStartPosition().x, (int)vertex.position.y + GetStartPosition().y, (int)vertex.position.z));
 			//vector3 += new Vector3(GetStartPosition().x, GetStartPosition().y, 0);
 			//Gizmos.DrawSphere(vector3, 1);
 		}
 
+		/*for (int i = 0; i < minimumTree.Count; i++)
+		{
+			Gizmos.color = Color.blue;
+			Gizmos.DrawLine(VertexToWorld(minimumTree[i].prevEdge.v), VertexToWorld(minimumTree[i].v));
+		}*/
+		
 	}
 
 	private Vector3 VertexToWorld(Vertex vertex)
 	{
-		return depthTilemaps[0].GetCellCenterWorld(new Vector3Int((int)vertex.position.x + GetStartPosition().x, (int)vertex.position.y + GetStartPosition().y, (int)vertex.position.z));
+		return depthTilemaps[0].GetCellCenterWorld(new Vector3Int((int)vertex.position.x + GetStartPosition().x, (int)vertex.position.y + GetStartPosition().y, 0));
 	}
 
 	private void AddRoomToTileMap(Tilemap tilemap, TileMapRoom room)
@@ -161,12 +221,18 @@ public class TileMapGenerator : MonoBehaviour
 			}
 		}
 
+		for (int room = 0; room < tileMapRooms.Count; room++)
+		{
+			tileMapRooms[room].SetID(room);
+		}
+
+
 		return tileMapRooms;
 	}
 
 	private TileMapRoom GenerateRoom(int id)
 	{
-		TileMapRoom tileMapRoom = new TileMapRoom(id);
+		TileMapRoom tileMapRoom = new TileMapRoom();
 		tileMapRoom.width = (int)NextGaussian(meanRoomWidth, room_Deviation, minRoomWidth, maxRoomWidth);
 		tileMapRoom.height = (int)NextGaussian(meanRoomHeight, room_Deviation, minRoomHeight, maxRoomHeight);
 		tileMapRoom.main = tileMapRoom.width * 1.25 > meanRoomWidth && tileMapRoom.height * 1.25 > meanRoomHeight;
@@ -189,12 +255,12 @@ public class TileMapGenerator : MonoBehaviour
 		{
 			PlaceRoom(tileMapRoom, ref gridPlaced, position);
 			SetDepth(tileMapRoom, maxDistance);
-			Debug.Log("Placed");
+			//	Debug.Log("Placed");
 			return true;
 		}
 		else
 		{
-			Debug.Log("Could Not place");
+			//Debug.Log("Could Not place");
 			return false;
 		}
 	}
@@ -277,6 +343,7 @@ public class TileMapGenerator : MonoBehaviour
 	}
 	private void Update()
 	{
+
 		/*if (Input.GetMouseButtonDown(0))
 		{
 			Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);

@@ -1,30 +1,35 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-public class Vertex 
+namespace Triangulation
 {
-    public Vector3 position;
+	public class Vertex
+	{
+		public int id { get; private set; }
 
-    //The outgoing halfedge (a halfedge that starts at this vertex)
-    //Doesnt matter which edge we connect to it
-    public HalfEdge halfEdge;
+		public Vector3 position;
 
-    //Which triangle is this vertex a part of?
-    public Triangle triangle;
+		//The outgoing halfedge (a halfedge that starts at this vertex)
+		//Doesnt matter which edge we connect to it
+		public HalfEdge halfEdge;
 
-    //The previous and next vertex this vertex is attached to
-    public Vertex prevVertex;
-    public Vertex nextVertex;
+		//Which triangle is this vertex a part of?
+		public Triangle triangle;
 
-    //Properties this vertex may have
-    //Reflex is concave
-    public bool isReflex;
-    public bool isConvex;
-    public bool isEar;
+		//The previous and next vertex this vertex is attached to
+		public Vertex prevVertex;
+		public Vertex nextVertex;
 
-    public Vertex(Vector3 position)
-    {
-        this.position = position;
-    }
+		//Properties this vertex may have
+		//Reflex is concave
+		public bool isReflex;
+		public bool isConvex;
+		public bool isEar;
+
+		public Vertex(Vector3 position, int roomID)
+		{
+			this.position = position;
+			this.id = roomID;
+		}
+	}
 }

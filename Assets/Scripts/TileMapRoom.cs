@@ -17,8 +17,7 @@ public class TileMapRoom
 	public int depth;
 	public bool main;
 
-	public TileMapRoom(int id)
-	{
-		roomID = id;
+	public void SetID(int id) {
+		roomID = id; 
 	}
 }
