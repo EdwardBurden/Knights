@@ -669,7 +669,8 @@ MonoBehaviour:
   minRoomHeight: 1
   meanRoomHeight: 5
   maxRoomHeight: 10
-  roomsAmount: 100
+  roomsAmount: 5
+  show: 0
 --- !u!156049354 &2027787174
 Grid:
   m_ObjectHideFlags: 0

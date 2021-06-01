@@ -2,25 +2,25 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Triangulation;
 using UnityEngine;
 
 public static class MinimumGraph
 {
 	public struct Edge
 	{
-		public HalfEdge edge;
+		public TriangleEdge edge;
 		public int sourceRoomId;
 		public int destinationRoomId;
 		public int distance;
 
-		public Edge(HalfEdge halfEdge)
+		public Edge(TriangleEdge triangleEdge, List<Vector2> vertices)
 		{
-			edge = halfEdge;
-			this.sourceRoomId = halfEdge.prevEdge.v.id;
-			this.destinationRoomId = halfEdge.v.id;
-			this.distance = (int)Vector2.Distance(halfEdge.prevEdge.v.position, halfEdge.v.position);
-			if (distance == 0) {
+			edge = triangleEdge;
+			this.sourceRoomId = triangleEdge.v1;
+			this.destinationRoomId = triangleEdge.v2;
+			this.distance = (int)Vector2.Distance(vertices[triangleEdge.v1], vertices[triangleEdge.v2]);
+			if (distance == 0)
+			{
 				Debug.LogWarning("Found 0");
 			}
 		}
@@ -32,53 +32,25 @@ public static class MinimumGraph
 		public int edgesCount;
 		public Edge[] edges;
 
-		public Graph(List<Triangle> triangles, int vertexCount)
+		public Graph(List<TriangleEdge> triangleEdges, List<int> indices, List<Vector2> vertices)
 		{
-			List<HalfEdge> allEdges = new List<HalfEdge>();
-			for (int i = 0; i < triangles.Count; i++)
+			List<Edge> allEdges = new List<Edge>();
+			for (int i = 0; i < triangleEdges.Count; i++)
 			{
-				if (triangles[i].halfEdge != null)
-				{
-					AddToList(allEdges, triangles[i].halfEdge);
-					AddToList(allEdges, triangles[i].halfEdge.prevEdge);
-					AddToList(allEdges, triangles[i].halfEdge.nextEdge);
-					//AddToList(allEdges, triangles[i].halfEdge.oppositeEdge);
-				}
+				allEdges.Add(new Edge(triangleEdges[i], vertices));
 			}
-			allEdges = allEdges.Distinct().ToList();
 
-			this.verticesCount = triangles.SelectMany(x => x.GetVertex()).Distinct().Count();
-			//this.verticesCount = allEdges.Select(x => x.v).Distinct().Count();
+			this.verticesCount = vertices.Count;
 			this.edgesCount = allEdges.Count;
-			this.edges = allEdges.Select(x => new Edge(x)).ToArray();
+			this.edges = allEdges.ToArray();
 		}
-
-		private static void AddToList(List<HalfEdge> allEdges, HalfEdge halfEdge)
-		{
-			if (allEdges.Contains(halfEdge))
-			{
-				return;
-			}
-			if (halfEdge.oppositeEdge != null && allEdges.Contains(halfEdge.oppositeEdge))
-			{
-				allEdges.Add(halfEdge);
-			}
-			allEdges.Add(halfEdge);
-
-			
-		}
-
 	}
-
-
 
 	public struct Subset
 	{
 		public int Parent;
 		public int Rank;
 	}
-
-
 
 	private static int Find(Subset[] subsets, int i)
 	{
@@ -143,4 +115,5 @@ public static class MinimumGraph
 		}
 		return result.Take(e).ToArray();
 	}
+
 }
