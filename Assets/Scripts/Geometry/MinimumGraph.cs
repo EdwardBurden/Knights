@@ -6,43 +6,17 @@ using UnityEngine;
 
 public static class MinimumGraph
 {
-	public struct Edge
-	{
-		public TriangleEdge edge;
-		public int sourceRoomId;
-		public int destinationRoomId;
-		public int distance;
-
-		public Edge(TriangleEdge triangleEdge, List<Vector2> vertices)
-		{
-			edge = triangleEdge;
-			this.sourceRoomId = triangleEdge.v1;
-			this.destinationRoomId = triangleEdge.v2;
-			this.distance = (int)Vector2.Distance(vertices[triangleEdge.v1], vertices[triangleEdge.v2]);
-			if (distance == 0)
-			{
-				Debug.LogWarning("Found 0");
-			}
-		}
-	}
-
 	public struct Graph
 	{
 		public int verticesCount;
 		public int edgesCount;
-		public Edge[] edges;
+		public TriangleEdge[] edges;
 
 		public Graph(List<TriangleEdge> triangleEdges, List<int> indices, List<Vector2> vertices)
 		{
-			List<Edge> allEdges = new List<Edge>();
-			for (int i = 0; i < triangleEdges.Count; i++)
-			{
-				allEdges.Add(new Edge(triangleEdges[i], vertices));
-			}
-
 			this.verticesCount = vertices.Count;
-			this.edgesCount = allEdges.Count;
-			this.edges = allEdges.ToArray();
+			this.edgesCount = triangleEdges.Count;
+			this.edges = triangleEdges.ToArray();
 		}
 	}
 
@@ -81,14 +55,14 @@ public static class MinimumGraph
 		}
 	}
 
-	public static Edge[] Kruskal(Graph graph)
+	public static TriangleEdge[] Kruskal(Graph graph)
 	{
 		int verticesCount = graph.verticesCount;
-		Edge[] result = new Edge[10000];
+		TriangleEdge[] result = new TriangleEdge[10000];
 		int i = 0;
 		int e = 0;
 
-		Array.Sort(graph.edges, delegate (Edge a, Edge b)
+		Array.Sort(graph.edges, delegate (TriangleEdge a, TriangleEdge b)
 		{
 			return a.distance.CompareTo(b.distance);
 		});
@@ -103,9 +77,9 @@ public static class MinimumGraph
 
 		while (e < verticesCount - 1)
 		{
-			Edge nextEdge = graph.edges[i++];
-			int x = Find(subsets, nextEdge.sourceRoomId);
-			int y = Find(subsets, nextEdge.destinationRoomId);
+			TriangleEdge nextEdge = graph.edges[i++];
+			int x = Find(subsets, nextEdge.v1);
+			int y = Find(subsets, nextEdge.v2);
 
 			if (x != y)
 			{

@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class TileMapRoom
 {
@@ -17,7 +19,15 @@ public class TileMapRoom
 	public int depth;
 	public bool main;
 
-	public void SetID(int id) {
-		roomID = id; 
+	public Tilemap tilemap;
+
+	public void SetID(int id)
+	{
+		roomID = id;
+	}
+
+	internal void SetTilemap(Tilemap tilemap)
+	{
+		this.tilemap = tilemap;
 	}
 }

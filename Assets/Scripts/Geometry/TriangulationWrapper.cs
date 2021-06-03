@@ -84,15 +84,15 @@ public class TriangulationWrapper
 
 			if (!ContainsOppositeEdge(edges, vertices, v1, v2))
 			{
-				edges.Add(new TriangleEdge(v1, v2));
+				edges.Add(new TriangleEdge(v1, v2, vertices));
 			}
 			if (!ContainsOppositeEdge(edges, vertices, v2, v3))
 			{
-				edges.Add(new TriangleEdge(v2, v3));
+				edges.Add(new TriangleEdge(v2, v3, vertices));
 			}
 			if (!ContainsOppositeEdge(edges, vertices, v3, v1))
 			{
-				edges.Add(new TriangleEdge(v3, v1));
+				edges.Add(new TriangleEdge(v3, v1, vertices));
 			}
 
 			//edges.Add(new TriangleEdge(v1, v2));

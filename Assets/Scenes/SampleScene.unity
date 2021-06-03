@@ -344,8 +344,8 @@ Camera:
   near clip plane: 0.3
   far clip plane: 200
   field of view: 9
-  orthographic: 0
-  orthographic size: 31.67
+  orthographic: 1
+  orthographic size: 4.89
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -354,8 +354,8 @@ Camera:
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
   m_TargetEye: 3
-  m_HDR: 1
-  m_AllowMSAA: 1
+  m_HDR: 0
+  m_AllowMSAA: 0
   m_AllowDynamicResolution: 0
   m_ForceIntoRT: 0
   m_OcclusionCulling: 1
@@ -659,18 +659,17 @@ MonoBehaviour:
   tileMapPrefab: {fileID: 9168229525736065504, guid: e0181aa639bd9f748bec6757f2909069,
     type: 3}
   groundTile: {fileID: 11400000, guid: 3cdaf3943cb5ad447813ab19354b5816, type: 2}
-  width: 50
-  height: 50
-  depth: 5
-  room_Deviation: 1
-  minRoomWidth: 1
-  meanRoomWidth: 5
-  maxRoomWidth: 10
-  minRoomHeight: 1
-  meanRoomHeight: 5
-  maxRoomHeight: 10
-  roomsAmount: 5
-  show: 0
+  mapWidth: 300
+  mapHeight: 300
+  depth: 3
+  corridorWidth: 0
+  widths: {x: 5, y: 25, z: 50}
+  heights: {x: 5, y: 25, z: 50}
+  roomsAmount: 300
+  mainsPercentage: 0.1
+  mean_d: 50
+  includeExtraEdgesPercent: 0.1
+  showFullTree: 0
 --- !u!156049354 &2027787174
 Grid:
   m_ObjectHideFlags: 0
