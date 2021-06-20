@@ -221,7 +221,7 @@ GameObject:
   m_Component:
   - component: {fileID: 791846935}
   - component: {fileID: 791846936}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Renderer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -387,7 +387,7 @@ GameObject:
   - component: {fileID: 1025671824}
   - component: {fileID: 1025671823}
   - component: {fileID: 1025671826}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Character
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -407,6 +407,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   movementSpeed: 10
+  target:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!50 &1025671824
 Rigidbody2D:
   serializedVersion: 4
@@ -465,13 +468,13 @@ GameObject:
   m_Component:
   - component: {fileID: 1516793319}
   - component: {fileID: 1516793320}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1516793319
 Transform:
   m_ObjectHideFlags: 0

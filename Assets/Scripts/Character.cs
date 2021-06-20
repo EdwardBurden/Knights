@@ -10,16 +10,19 @@ public class Character : MonoBehaviour
 	Rigidbody2D rbody;
 	private float targetDepth = -120;
 
+	public LayerMask target;
+
 	private void Awake()
 	{
 		rbody = GetComponent<Rigidbody2D>();
 		targetDepth = transform.position.z;
+		//Physics.IgnoreLayerCollision(0, 8);
 	}
 
 
 	private void Update()
 	{
-		Collider2D[] collider = Physics2D.OverlapPointAll(transform.position);
+		Collider2D[] collider = Physics2D.OverlapPointAll(transform.position , target);
 		Debug.DrawRay(this.transform.position, Vector3.forward * 100);
 
 		if (collider.Length > 0)
