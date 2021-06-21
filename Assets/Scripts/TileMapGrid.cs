@@ -26,6 +26,7 @@ public class TileMapGrid : MonoBehaviour
 
 	//Corridor
 	public TileBase corridorTile;
+	public int corridorWidth;
 
 	//TEMP
 	private List<TriangleEdge> minimumTree = new List<TriangleEdge>();
@@ -70,7 +71,7 @@ public class TileMapGrid : MonoBehaviour
 
 		foreach (TriangleEdge edge in minimumTree)
 		{
-			worldData.corridors.Add(GenerateCorridor(edge, relativeStartPosition));
+			worldData.corridors.Add(GenerateCorridor(edge, relativeStartPosition, corridorWidth));
 		}
 
 
@@ -79,40 +80,55 @@ public class TileMapGrid : MonoBehaviour
 		return worldData;
 	}
 
-	private TileMapCorridor GenerateCorridor(TriangleEdge edge, Vector2Int relativeStartPosition)
+	private TileMapCorridor GenerateCorridor(TriangleEdge edge, Vector2Int relativeStartPosition, int width)
 	{
 		TileMapCorridor tileMapCorridor = new TileMapCorridor();
 		tileMapCorridor.TileBase = corridorTile;
 		List<Vector3Int> positions = new List<Vector3Int>();
 
-		Vector3Int start = new Vector3Int((int)vertices[edge.v2].x, (int)vertices[edge.v2].y, 0);
-		Vector3Int end = new Vector3Int((int)vertices[edge.v1].x, (int)vertices[edge.v1].y, 0);
-		int xDiff = start.x - end.x;
-		int yDiff = start.y - end.y;
+
+		Vector3 end = (Vector3)vertices[edge.v2];
+		Vector3 start = (Vector3)vertices[edge.v1];
+		Vector3Int startInt = new Vector3Int((int)start.x, (int)start.y, 0);
+		Vector3Int endInt = new Vector3Int((int)end.x, (int)end.y, 0);
+		int xDiff = endInt.x - startInt.x;
+		int yDiff = endInt.y - startInt.y;
 		int xSign = xDiff > 0 ? 1 : -1;
 		int ySign = yDiff > 0 ? 1 : -1;
 
 
-		for (int i = 0; i < Mathf.Abs(xDiff); i++)
+		//REDO AT SOMEPOINT
+
+		for (int i = 0; i < Mathf.Abs(xDiff) + (width / 2); i++)
 		{
-			Vector3Int gridPosition = end + new Vector3Int(xSign * i, 0, 0);
-			if (gridPlaced[gridPosition.x, gridPosition.y] == null) //check all tilemap
+			Vector3Int gridPosition = startInt + new Vector3Int(xSign * i, 0, 0) - new Vector3Int(0, width / 2, 0);
+			for (int w = 0; w < width; w++)
 			{
-				gridPlaced[gridPosition.x, gridPosition.y] = corridorTile;
-				positions.Add(gridPosition);
+				Vector3Int pos = gridPosition + new Vector3Int(0, w, 0);
+				if (gridPlaced[pos.x, pos.y] == null) //check all tilemap
+				{
+					gridPlaced[pos.x, pos.y] = corridorTile;
+					positions.Add(pos);
+				}
 			}
 		}
 
-		for (int i = 0; i < Mathf.Abs(yDiff); i++)
+		for (int i = 0; i < Mathf.Abs(yDiff) + (width / 2); i++)
 		{
-			Vector3Int gridPosition = end + new Vector3Int(xDiff, ySign * i, 0);
-			if (gridPlaced[gridPosition.x, gridPosition.y] == null) //check all tilemap
+			Vector3Int gridPosition = startInt + new Vector3Int(xDiff, ySign * i, 0) - new Vector3Int(width / 2, 0, 0);
+			for (int w = 0; w < width; w++)
 			{
-				gridPlaced[gridPosition.x, gridPosition.y] = corridorTile;
-				positions.Add(gridPosition);
+				Vector3Int pos = gridPosition + new Vector3Int(w, 0, 0);
+				if (gridPlaced[pos.x, pos.y] == null) //check all tilemap
+				{
+					gridPlaced[pos.x, pos.y] = corridorTile;
+					positions.Add(pos);
+				}
 			}
 		}
+
 		tileMapCorridor.positions = positions;
+
 		return tileMapCorridor;
 	}
 

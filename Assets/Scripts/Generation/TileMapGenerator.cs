@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -26,9 +27,6 @@ public class TileMapGenerator : MonoBehaviour
 	private List<TriangleEdge> triangleEdges = new List<TriangleEdge>();
 	Dictionary<int, Tilemap> depthTilemaps = new Dictionary<int, Tilemap>();
 
-	public bool showFullTree;
-	public float includeExtraEdgesPercent;
-
 
 	private void Start()
 	{
@@ -49,6 +47,9 @@ public class TileMapGenerator : MonoBehaviour
 		}
 
 		//SHOW
+
+
+
 		foreach (TileMapRoom room in worldData.rooms)
 		{
 			if (!depthTilemaps.TryGetValue(room.depth, out Tilemap tilemap))
@@ -85,6 +86,8 @@ public class TileMapGenerator : MonoBehaviour
 
 	private void AddCorridorToTileMap(Tilemap tilemap, TileMapCorridor corridor)
 	{
+
+
 		foreach (Vector3Int pos in corridor.positions)
 		{
 			Vector3Int gridPosition = (Vector3Int)(pos + (Vector3Int)GetStartPosition());

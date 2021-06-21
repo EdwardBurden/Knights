@@ -491261,8 +491261,6 @@ MonoBehaviour:
   grid: {fileID: 2027787175}
   tileMapPrefab: {fileID: 9168229525736065504, guid: e0181aa639bd9f748bec6757f2909069,
     type: 3}
-  showFullTree: 0
-  includeExtraEdgesPercent: 0
 --- !u!156049354 &2027787174
 Grid:
   m_ObjectHideFlags: 0
@@ -491305,10 +491303,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5144bf1299e384f42854f97e25473b34, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapWidth: 50
-  mapHeight: 50
+  mapWidth: 100
+  mapHeight: 100
   mapDepth: 5
-  includeExtraEdgesPercent: 0
+  includeExtraEdgesPercent: 0.15
   widths: {x: 5, y: 7, z: 15}
   heights: {x: 5, y: 7, z: 15}
   standard_divation: 2
@@ -491316,3 +491314,4 @@ MonoBehaviour:
   roomTile: {fileID: 11400000, guid: 3cdaf3943cb5ad447813ab19354b5816, type: 2}
   mainsPercentage: 0.05
   corridorTile: {fileID: 11400000, guid: 9fcc49d78a7d61a4cbf5621c47ef9b04, type: 2}
+  corridorWidth: 2
