@@ -32,4 +32,20 @@ public class Helper //rename later maybe
 	{
 		return mean + NextGaussian() * standard_deviation;
 	}
+
+	public static Vector2Int GetStartPosition(StartGridPosition startGridPosition, Vector2Int startposition, int height, int width)
+	{
+		switch (startGridPosition)
+		{
+			case StartGridPosition.Top:
+				return startposition + new Vector2Int(-width, -height);
+			case StartGridPosition.Center:
+				return startposition + new Vector2Int(-width / 2, -height / 2);
+			case StartGridPosition.Bottom:
+				return startposition + new Vector2Int(0, 0);
+			default:
+				return Vector2Int.zero;
+		}
+
+	}
 }

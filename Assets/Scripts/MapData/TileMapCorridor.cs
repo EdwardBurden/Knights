@@ -5,7 +5,7 @@ using UnityEngine.Tilemaps;
 
 public class TileMapCorridor 
 {
-	public TileBase TileBase;
+	//public TileBase TileBase;
 	public List<Vector3Int> positions = new List<Vector3Int>();
 	public BoundsInt xBounds;
 	public BoundsInt yBounds;

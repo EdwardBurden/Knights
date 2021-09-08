@@ -7,223 +7,123 @@ using static MinimumGraph;
 
 public class TileMapGrid : MonoBehaviour
 {
-	private int MAX_ATTEMPTS = 5;
-
-	//Grid
-	private TileBase[,] gridPlaced;
-	public int mapWidth;
-	public int mapHeight;
-	public int mapDepth;
-	public float includeExtraEdgesPercent;
-
-	//Room
-	public Vector3Int widths;
-	public Vector3Int heights;
-	public float standard_divation;
-	public int roomsAmount;
 	public TileBase roomTile;
-	public float mainsPercentage;
-
-	//Corridor
 	public TileBase corridorTile;
-	public int corridorWidth;
+	public Tilemap tileMapPrefab;
 
-	//TEMP
-	private List<TriangleEdge> minimumTree = new List<TriangleEdge>();
-	private List<Vector2> vertices = new List<Vector2>();
-	private List<int> indices = new List<int>();
-	private List<TriangleEdge> triangleEdges = new List<TriangleEdge>();
+	private GridData gridData;
+	private Dictionary<int, Tilemap> depthTilemaps = new Dictionary<int, Tilemap>();
 
-	public WorldData GenerateWorld(Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
+	public void LoadGrid(GridData gridData)
 	{
-		gridPlaced = new TileBase[mapWidth, mapHeight];
-		minimumTree.Clear();
-		vertices.Clear();
-		indices.Clear();
-		triangleEdges.Clear();
-
-
-		WorldData worldData = new WorldData();
-
-		float minDist = Vector2Int.Distance(startposition, relativeStartPosition);
-		float maxDist = Vector2Int.Distance(startposition, new Vector2Int(relativeStartPosition.x + mapWidth, relativeStartPosition.y + mapHeight));
-		float maxDistance = Mathf.Max(minDist, maxDist);
-		worldData.rooms = GenerateRooms(maxDistance, startposition, relativeStartPosition, topDepthAtStart);
-
-		bool success = TriangulationWrapper.Triangulate(worldData.rooms.Select(x => x.centerPosition).ToList(), out indices, out vertices);
-		triangleEdges = TriangulationWrapper.ConvertIndicesToEdges(indices, vertices);
-		foreach (TriangleEdge edge in triangleEdges)
+		this.gridData = gridData;
+		depthTilemaps.Clear();
+		var tempList = transform.Cast<Transform>().ToList();
+		foreach (Transform map in tempList)
 		{
-			TileMapRoom source = worldData.rooms.FirstOrDefault(x => x.centerPosition == vertices[edge.v1]);
-			TileMapRoom destination = worldData.rooms.FirstOrDefault(x => x.centerPosition == vertices[edge.v2]);
-			edge.source = source;
-			edge.destination = destination;
+#if UNITY_EDITOR
+			DestroyImmediate(map.gameObject);
+#else
+	Destroy(map.gameObject);
+#endif
 		}
-		Graph graph = new Graph(triangleEdges, indices, vertices);
-		minimumTree = MinimumGraph.Kruskal(graph).ToList();
-		for (int i = 0; i < triangleEdges.Count; i++)
+
+		foreach (TileMapRoom room in gridData.rooms)
 		{
-			if (UnityEngine.Random.Range(0.0f, 1.0f) < includeExtraEdgesPercent && !minimumTree.Contains(triangleEdges[i]))
+			if (!depthTilemaps.TryGetValue(room.depth, out Tilemap tilemap))
 			{
-				minimumTree.Add(triangleEdges[i]);
+				tilemap = CreateNewTileMap(room.depth);
+				depthTilemaps.Add(room.depth, tilemap);
 			}
+			AddRoomToTileMap(tilemap, room);
 		}
-
-		foreach (TriangleEdge edge in minimumTree)
+		Tilemap corridorMap = CreateNewTileMap(gridData.mapDepth + 1);
+		foreach (TileMapRoom room in gridData.rooms)
 		{
-			worldData.corridors.Add(GenerateCorridor(edge, relativeStartPosition, corridorWidth));
-		}
+			Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
+			Vector2Int roomCenterInt = new Vector2Int((int)room.centerPosition.x, (int)room.centerPosition.y);
+			Vector3Int gridPosition = (Vector3Int)(roomCenterInt + new Vector2Int(startPos[0], startPos[1]));
+			corridorMap.SetTile(gridPosition, corridorTile);
 
 
 
-
-		return worldData;
-	}
-
-	private TileMapCorridor GenerateCorridor(TriangleEdge edge, Vector2Int relativeStartPosition, int width)
-	{
-		TileMapCorridor tileMapCorridor = new TileMapCorridor();
-		tileMapCorridor.TileBase = corridorTile;
-		List<Vector3Int> positions = new List<Vector3Int>();
-
-
-		Vector3 end = (Vector3)vertices[edge.v2];
-		Vector3 start = (Vector3)vertices[edge.v1];
-		Vector3Int startInt = new Vector3Int((int)start.x, (int)start.y, 0);
-		Vector3Int endInt = new Vector3Int((int)end.x, (int)end.y, 0);
-		int xDiff = endInt.x - startInt.x;
-		int yDiff = endInt.y - startInt.y;
-		int xSign = xDiff > 0 ? 1 : -1;
-		int ySign = yDiff > 0 ? 1 : -1;
-
-
-		//REDO AT SOMEPOINT
-
-		for (int i = 0; i < Mathf.Abs(xDiff) + (width / 2); i++)
-		{
-			Vector3Int gridPosition = startInt + new Vector3Int(xSign * i, 0, 0) - new Vector3Int(0, width / 2, 0);
-			for (int w = 0; w < width; w++)
+			foreach (var item in room.connectedRooms)
 			{
-				Vector3Int pos = gridPosition + new Vector3Int(0, w, 0);
-				if (gridPlaced[pos.x, pos.y] == null) //check all tilemap
-				{
-					gridPlaced[pos.x, pos.y] = corridorTile;
-					positions.Add(pos);
-				}
+				TileMapRoom destination = gridData.rooms.FirstOrDefault(rooom => rooom.roomID == item);
+				//Vector2Int destCenterInt = new Vector2Int((int)destination.centerPosition.x, (int)destination.centerPosition.y);
+				//Vector3Int destPosition = (Vector3Int)(destCenterInt + new Vector2Int(startPos[0], startPos[1]));
+
+
+				float x = (destination.centerPosition.x + room.centerPosition.x) / 2.0f;
+				float y = (destination.centerPosition.y + room.centerPosition.y) / 2.0f;
+				Vector2Int midpoint = new Vector2Int((int)x, (int)y);
+				//corridorMap.SetTile(gridPosition, corridorTile);
+
+				Vector3Int posss = (Vector3Int)(midpoint + new Vector2Int(startPos[0], startPos[1]));
+				corridorMap.SetTile(posss, corridorTile);
+
+
+
+		
 			}
-		}
 
-		for (int i = 0; i < Mathf.Abs(yDiff) + (width / 2); i++)
-		{
-			Vector3Int gridPosition = startInt + new Vector3Int(xDiff, ySign * i, 0) - new Vector3Int(width / 2, 0, 0);
-			for (int w = 0; w < width; w++)
-			{
-				Vector3Int pos = gridPosition + new Vector3Int(w, 0, 0);
-				if (gridPlaced[pos.x, pos.y] == null) //check all tilemap
-				{
-					gridPlaced[pos.x, pos.y] = corridorTile;
-					positions.Add(pos);
-				}
-			}
-		}
+			//determine faces to end point
+			//pick one
+			//loop in face direction to end
+			//move in other direction if needed
 
-		tileMapCorridor.positions = positions;
-
-		return tileMapCorridor;
-	}
-
-	public List<TileMapRoom> GenerateRooms(float maxDistance, Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
-	{
-		List<TileMapRoom> tileMapRooms = new List<TileMapRoom>();
-		for (int room = 0; room < roomsAmount; room++)
-		{
-			tileMapRooms.Add(GenerateRoom());
-		}
-		for (int i = tileMapRooms.Count - 1; i >= 0; i--)
-		{
-			if (!TryPlaceRoom(tileMapRooms[i], maxDistance, startposition, relativeStartPosition, topDepthAtStart))
-			{
-				tileMapRooms.RemoveAt(i);
-			}
-		}
-
-		for (int room = 0; room < tileMapRooms.Count; room++)
-		{
-			tileMapRooms[room].SetID(room);
-		}
-		return tileMapRooms;
-	}
-
-	private TileMapRoom GenerateRoom()
-	{
-		TileMapRoom tileMapRoom = new TileMapRoom();
-		tileMapRoom.width = (int)Helper.NextGaussian(widths[1], standard_divation, widths[0], widths[2]);
-		tileMapRoom.height = (int)Helper.NextGaussian(heights[1], standard_divation, heights[0], heights[2]);
-		tileMapRoom.isMain = tileMapRoom.width * 1.25 > widths[1] && tileMapRoom.height * 1.25 > heights[1] || (Random.Range(0.0f, 1f) < mainsPercentage);
-		tileMapRoom.floorTile = roomTile;
-		return tileMapRoom;
-	}
-
-	private bool TryPlaceRoom(TileMapRoom tileMapRoom, float maxDistance, Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
-	{
-		bool canPlace = false;
-		int attmepts = 0;
-		Vector2Int position = Vector2Int.zero;
-		while (attmepts < MAX_ATTEMPTS && !canPlace)
-		{
-			position = new Vector2Int(Random.Range(0, mapWidth), Random.Range(0, mapHeight));
-			canPlace = CanPlaceRoom(tileMapRoom, position);
-			attmepts++;
-		}
-
-		if (canPlace)
-		{
-			PlaceRoom(tileMapRoom, position);
-			SetDepth(tileMapRoom, maxDistance, startposition, relativeStartPosition, topDepthAtStart);
-			return true;
-		}
-		else
-		{
-			return false;
 		}
 	}
 
-	private bool CanPlaceRoom(TileMapRoom tileMapRoom, Vector2Int position)
+	private bool IsRoomFacingRoom(TileMapRoom sourceRoom, TileMapRoom destinationRoom, Vector2 direction)
 	{
-		for (int i = 0; i < tileMapRoom.width; i++)
-		{
-			for (int j = 0; j < tileMapRoom.height; j++)
-			{
-				if (position.x + i >= mapWidth || position.y + j >= mapHeight)
-				{
-					return false;
-				}
-
-				if (gridPlaced[position.x + i, position.y + j] != null)
-				{
-					return false;
-				}
-			}
-		}
 		return true;
+
 	}
 
-	private void PlaceRoom(TileMapRoom tileMapRoom, Vector2Int position)
+	private void AddCorridorToTileMap(Tilemap tilemap, TileMapCorridor corridor)
 	{
-		tileMapRoom.position = position;
-		for (int i = 0; i < tileMapRoom.width; i++)
+		foreach (Vector3Int pos in corridor.positions)
 		{
-			for (int j = 0; j < tileMapRoom.height; j++)
+			Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
+			Vector3Int gridPosition = (Vector3Int)(pos + (Vector3Int)startPos);
+
+			tilemap.SetTile(gridPosition, corridorTile);
+			tilemap.SetTileFlags(gridPosition, TileFlags.None);
+			//tilemap.SetColor(gridPosition, color);
+		}
+	}
+
+	private void AddRoomToTileMap(Tilemap tilemap, TileMapRoom room)
+	{
+		//Color color = new Color((float)room.depth / (float)gridData.mapDepth, 0, 0);
+		Color color = new Color(room.connectedRooms.Count, 0, 0);
+		//color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), 1, 1);
+		if (room.isMain)
+		{
+			//color = Color.green;
+		}
+		for (int x = 0; x < room.width; x++)
+		{
+			for (int y = 0; y < room.height; y++)
 			{
-				gridPlaced[position.x + i, position.y + j] = tileMapRoom.floorTile;
+				Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
+				Vector3Int gridPosition = (Vector3Int)(room.position + new Vector2Int(startPos[0] + x, startPos[1] + y));
+
+				tilemap.SetTile(gridPosition, roomTile);
+				tilemap.SetTileFlags(gridPosition, TileFlags.None);
+				tilemap.SetColor(gridPosition, color);
 			}
 		}
 	}
 
-	private void SetDepth(TileMapRoom tileMapRoom, float maxDistance, Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
+	private Tilemap CreateNewTileMap(int order)
 	{
-		float dist = Vector2Int.Distance(startposition, (Vector2Int)tileMapRoom.position + relativeStartPosition);
-		int inverse = topDepthAtStart ? 1 : 0;
-		tileMapRoom.depth = Mathf.RoundToInt(Mathf.Abs(inverse - (dist / maxDistance)) * mapDepth);
+		Tilemap tilemap = Instantiate(tileMapPrefab, this.transform);
+		tilemap.name = order.ToString();
+		tilemap.GetComponent<TilemapRenderer>().sortingOrder = order;
+		tilemap.transform.localPosition += new Vector3(0, 0, -order * 10);
+		return tilemap;
 	}
+
 }
