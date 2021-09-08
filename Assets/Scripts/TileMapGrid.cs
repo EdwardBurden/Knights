@@ -1,10 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using static MinimumGraph;
 
+[ExecuteInEditMode]
 public class TileMapGrid : MonoBehaviour
 {
 	public TileBase roomTile;
@@ -13,6 +15,8 @@ public class TileMapGrid : MonoBehaviour
 
 	private GridData gridData;
 	private Dictionary<int, Tilemap> depthTilemaps = new Dictionary<int, Tilemap>();
+
+	private IEnumerator coroutine;
 
 	public void LoadGrid(GridData gridData)
 	{
@@ -38,48 +42,118 @@ public class TileMapGrid : MonoBehaviour
 			AddRoomToTileMap(tilemap, room);
 		}
 		Tilemap corridorMap = CreateNewTileMap(gridData.mapDepth + 1);
+		coroutine = DrawCorridors(corridorMap);
+		StopAllCoroutines();
+		StartCoroutine(coroutine);
+
+	}
+
+
+	private static List<IEnumerator> CoroutineInProgress = new List<IEnumerator>();
+	private void OnEnable()
+	{
+
+		EditorApplication.update += ExecuteCoroutine;
+	}
+
+
+	static int currentExecute = 0;
+	private static void ExecuteCoroutine()
+	{
+		if (CoroutineInProgress.Count <= 0)
+		{
+			//  Debug.LogWarning("ping");
+			return;
+		}
+
+		// Debug.LogWarning("exec");
+
+		currentExecute = (currentExecute + 1) % CoroutineInProgress.Count;
+
+		bool finish = !CoroutineInProgress[currentExecute].MoveNext();
+
+		if (finish)
+		{
+			CoroutineInProgress.RemoveAt(currentExecute);
+		}
+	}
+
+	public new static IEnumerator StartCoroutine(IEnumerator newCorou)
+	{
+		CoroutineInProgress.Add(newCorou);
+		return newCorou;
+	}
+
+	private IEnumerator DrawCorridors(Tilemap corridorMap)
+	{
 		foreach (TileMapRoom room in gridData.rooms)
 		{
 			Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
 			Vector2Int roomCenterInt = new Vector2Int((int)room.centerPosition.x, (int)room.centerPosition.y);
 			Vector3Int gridPosition = (Vector3Int)(roomCenterInt + new Vector2Int(startPos[0], startPos[1]));
-			corridorMap.SetTile(gridPosition, corridorTile);
-
-
-
+			//corridorMap.SetTile(gridPosition, corridorTile);
 			foreach (var item in room.connectedRooms)
 			{
 				TileMapRoom destination = gridData.rooms.FirstOrDefault(rooom => rooom.roomID == item);
-				//Vector2Int destCenterInt = new Vector2Int((int)destination.centerPosition.x, (int)destination.centerPosition.y);
-				//Vector3Int destPosition = (Vector3Int)(destCenterInt + new Vector2Int(startPos[0], startPos[1]));
+
+				Vector2 differnce = destination.centerPosition - room.centerPosition;
+				Vector2Int differnceInt = Vector2Int.RoundToInt(differnce);
+				int xDirection = 0;
+				if (differnceInt.x != 0)
+				{
+					xDirection = differnceInt.x > 0 ? 1 : -1;
+				}
+				int yDirection = 0;
+				if (differnceInt.y != 0)
+				{
+					yDirection = differnceInt.y > 0 ? 1 : -1;
+				}
 
 
-				float x = (destination.centerPosition.x + room.centerPosition.x) / 2.0f;
-				float y = (destination.centerPosition.y + room.centerPosition.y) / 2.0f;
-				Vector2Int midpoint = new Vector2Int((int)x, (int)y);
-				//corridorMap.SetTile(gridPosition, corridorTile);
-
-				Vector3Int posss = (Vector3Int)(midpoint + new Vector2Int(startPos[0], startPos[1]));
-				corridorMap.SetTile(posss, corridorTile);
+				Vector2Int direction = new Vector2Int(xDirection, yDirection);
+				//Vector3Int posss = (Vector3Int)(midpoint + new Vector2Int(startPos[0], startPos[1]));
+				//	corridorMap.SetTile(posss, corridorTile);
 
 
-
-		
+				for (int i = 0; i < (int)Mathf.Abs(differnceInt.x); i++)
+				{
+					Vector2Int posisionyy = new Vector2Int((int)(room.centerPosition.x + (i * direction.x)), (int)(room.centerPosition.y));
+					Vector3Int gridposss = (Vector3Int)(posisionyy + new Vector2Int(startPos[0], startPos[1]));
+					if (!TileExistsOnAnyDepth(gridposss))
+					{
+						corridorMap.SetTile(gridposss, corridorTile);
+					}
+					yield return new WaitForSeconds(.1f);
+				}
+				for (int j = 0; j < (int)Mathf.Abs(differnceInt.y); j++)
+				{
+					Vector2Int posisionyy = new Vector2Int((int)(room.centerPosition.x + differnceInt.x), (int)(room.centerPosition.y + (j * direction.y)));
+					Vector3Int gridposss = (Vector3Int)(posisionyy + new Vector2Int(startPos[0], startPos[1]));
+					if (!TileExistsOnAnyDepth(gridposss))
+					{
+						corridorMap.SetTile(gridposss, corridorTile);
+					}
+					yield return new WaitForSeconds(.1f);
+				}
 			}
 
-			//determine faces to end point
-			//pick one
-			//loop in face direction to end
-			//move in other direction if needed
-
 		}
+
+
 	}
 
-	private bool IsRoomFacingRoom(TileMapRoom sourceRoom, TileMapRoom destinationRoom, Vector2 direction)
+	private bool TileExistsOnAnyDepth(Vector3Int position)
 	{
-		return true;
-
+		foreach (KeyValuePair<int, Tilemap> tilemap in depthTilemaps.ToList())
+		{
+			if (tilemap.Value.HasTile(position))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
+
 
 	private void AddCorridorToTileMap(Tilemap tilemap, TileMapCorridor corridor)
 	{
@@ -96,12 +170,12 @@ public class TileMapGrid : MonoBehaviour
 
 	private void AddRoomToTileMap(Tilemap tilemap, TileMapRoom room)
 	{
-		//Color color = new Color((float)room.depth / (float)gridData.mapDepth, 0, 0);
-		Color color = new Color(room.connectedRooms.Count, 0, 0);
+		Color color = new Color((float)room.depth / (float)gridData.mapDepth, 0, 0);
+		//Color color = new Color(room.connectedRooms.Count, 0, 0);
 		//color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), 1, 1);
 		if (room.isMain)
 		{
-			//color = Color.green;
+			color = Color.gray;
 		}
 		for (int x = 0; x < room.width; x++)
 		{
