@@ -22,7 +22,7 @@ public class Character : MonoBehaviour
 
 	private void Update()
 	{
-		Collider2D[] collider = Physics2D.OverlapPointAll(transform.position , target);
+		Collider2D[] collider = Physics2D.OverlapPointAll(transform.position, target);
 		Debug.DrawRay(this.transform.position, Vector3.forward * 100);
 
 		if (collider.Length > 0)
@@ -53,6 +53,6 @@ public class Character : MonoBehaviour
 
 
 		transform.position = new Vector3(newPos.x, newPos.y, Mathf.Lerp(transform.position.z, targetDepth, Time.deltaTime));
-		Camera.main.transform.position = new Vector3(this.transform.position.x, this.transform.position.y, transform.position.z - 120);
+		Camera.main.transform.position = new Vector3(this.transform.position.x, this.transform.position.y, transform.position.z - 50);
 	}
 }
