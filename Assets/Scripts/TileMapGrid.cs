@@ -47,13 +47,24 @@ public class TileMapGrid : MonoBehaviour
 		}
 
 		DrawCorridors();
+
+		CreateColliders();
+
+
 		foreach (KeyValuePair<int, Tilemap> tilemap in depthTilemaps.ToList())
 		{
 			tilemap.Value.RefreshAllTiles();
 		}
 	}
 
-
+	private void CreateColliders()
+	{
+		//get tiles array for all tilemaps
+		//combine together
+		//loop and and use byte from surronding tiles to create collider
+		//collider tile will find appropriate sprite on its refresh 
+		//refresh everything
+	}
 
 	private void DrawCorridors()
 	{
@@ -108,7 +119,6 @@ public class TileMapGrid : MonoBehaviour
 						corridorMap.SetTile(gridposss, corridorTile);
 					}
 				}
-				corridorMap.RefreshAllTiles();
 			}
 
 		}

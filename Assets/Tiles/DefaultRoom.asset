@@ -34,4 +34,3 @@ MonoBehaviour:
   m_InstancedGameObject: {fileID: 0}
   m_Flags: 1
   m_ColliderType: 1
-  roomCollider: {fileID: 11400000, guid: 3cdaf3943cb5ad447813ab19354b5816, type: 2}

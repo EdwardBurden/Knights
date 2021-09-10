@@ -5,7 +5,7 @@ using UnityEngine.Tilemaps;
 
 public class ColliderGeneratingTile : Tile
 {
-	public TileBase roomCollider;
+	/*public TileBase roomCollider;
 	private Tilemap _colliderMap;
 	private Tilemap colliderMap
 	{
@@ -75,4 +75,5 @@ public class ColliderGeneratingTile : Tile
 		}
 		base.GetTileData(position, tilemap, ref tileData);
 	}
+	*/
 }

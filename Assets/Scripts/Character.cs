@@ -52,7 +52,7 @@ public class Character : MonoBehaviour
 		//rbody.MovePosition(newPos);
 
 
-		transform.position = new Vector3(newPos.x, newPos.y, Mathf.Lerp(transform.position.z, targetDepth, Time.deltaTime));
+		rbody.MovePosition(new Vector3(newPos.x, newPos.y, Mathf.Lerp(transform.position.z, targetDepth, Time.deltaTime)));
 		Camera.main.transform.position = new Vector3(this.transform.position.x, this.transform.position.y, transform.position.z - 50);
 	}
 }
