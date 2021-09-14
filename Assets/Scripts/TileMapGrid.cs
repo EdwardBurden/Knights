@@ -10,20 +10,22 @@ using static MinimumGraph;
 public class TileMapGrid : MonoBehaviour
 {
 	public TileBase roomTile;
+
 	public TileBase corridorTile;
 	public TileBase colliderTile;
 	public Tilemap tileMapPrefab;
 	public Tilemap colliderMapPrefab;
 
 	private GridData gridData;
-	private Dictionary<int, Tilemap> depthTilemaps = new Dictionary<int, Tilemap>();
+	private Dictionary<int, Tilemap> rendererDepthMaps = new Dictionary<int, Tilemap>();
 	private Tilemap colliderMap;
+
 	private IEnumerator coroutine;
 
 	public void LoadGrid(GridData gridData)
 	{
 		this.gridData = gridData;
-		depthTilemaps.Clear();
+		rendererDepthMaps.Clear();
 		var tempList = transform.Cast<Transform>().ToList();
 		foreach (Transform map in tempList)
 		{
@@ -33,37 +35,14 @@ public class TileMapGrid : MonoBehaviour
 	Destroy(map.gameObject);
 #endif
 		}
-
-		colliderMap = Instantiate(colliderMapPrefab, this.transform);
-		colliderMap.ClearAllTiles();
-		foreach (TileMapRoom room in gridData.rooms)
-		{
-			if (!depthTilemaps.TryGetValue(room.depth, out Tilemap tilemap))
-			{
-				tilemap = CreateNewTileMap(room.depth);
-				depthTilemaps.Add(room.depth, tilemap);
-			}
-			AddRoomToTileMap(tilemap, room, colliderMap);
-		}
-
+		colliderMap = CreateNewColliderDepthMap(0);
+		DrawRooms();
 		DrawCorridors();
 
-		CreateColliders();
-
-
-		foreach (KeyValuePair<int, Tilemap> tilemap in depthTilemaps.ToList())
+		foreach (KeyValuePair<int, Tilemap> tilemap in rendererDepthMaps.ToList())
 		{
 			tilemap.Value.RefreshAllTiles();
 		}
-	}
-
-	private void CreateColliders()
-	{
-		//get tiles array for all tilemaps
-		//combine together
-		//loop and and use byte from surronding tiles to create collider
-		//collider tile will find appropriate sprite on its refresh 
-		//refresh everything
 	}
 
 	private void DrawCorridors()
@@ -74,61 +53,96 @@ public class TileMapGrid : MonoBehaviour
 			Vector2Int roomCenterInt = new Vector2Int((int)room.centerPosition.x, (int)room.centerPosition.y);
 			Vector3Int gridPosition = (Vector3Int)(roomCenterInt + new Vector2Int(startPos[0], startPos[1]));
 
-			foreach (var item in room.connectedRooms)
+			foreach (int connectedRoom in room.connectedRooms)
 			{
-				TileMapRoom destination = gridData.rooms.FirstOrDefault(rooom => rooom.roomID == item);
-
-				if (!depthTilemaps.TryGetValue(room.depth, out Tilemap corridorMap))
-				{
-					corridorMap = CreateNewTileMap(room.depth);
-					depthTilemaps.Add(room.depth, corridorMap);
-				}
-
-
-				Vector2 differnce = destination.centerPosition - room.centerPosition;
-				Vector2Int differnceInt = Vector2Int.RoundToInt(differnce);
-				int xDirection = 0;
-				if (differnceInt.x != 0)
-				{
-					xDirection = differnceInt.x > 0 ? 1 : -1;
-				}
-				int yDirection = 0;
-				if (differnceInt.y != 0)
-				{
-					yDirection = differnceInt.y > 0 ? 1 : -1;
-				}
-
-				Vector2Int direction = new Vector2Int(xDirection, yDirection);
-
-				for (int i = 0; i < (int)Mathf.Abs(differnceInt.x); i++)
-				{
-					Vector2Int posisionyy = new Vector2Int((int)(room.centerPosition.x + (i * direction.x)), (int)(room.centerPosition.y));
-					Vector3Int gridposss = (Vector3Int)(posisionyy + new Vector2Int(startPos[0], startPos[1]));
-					if (!TileExistsOnAnyDepth(gridposss))
-					{
-						corridorMap.SetTile(gridposss, corridorTile);
-					}
-				}
-
-				for (int j = 0; j < (int)Mathf.Abs(differnceInt.y); j++)
-				{
-					Vector2Int posisionyy = new Vector2Int((int)(room.centerPosition.x + differnceInt.x), (int)(room.centerPosition.y + (j * direction.y)));
-					Vector3Int gridposss = (Vector3Int)(posisionyy + new Vector2Int(startPos[0], startPos[1]));
-					if (!TileExistsOnAnyDepth(gridposss))
-					{
-						corridorMap.SetTile(gridposss, corridorTile);
-					}
-				}
+				rendererDepthMaps.TryGetValue(room.depth, out Tilemap corridorMap);
+				TileMapRoom destination = gridData.rooms.FirstOrDefault(rooom => rooom.roomID == connectedRoom);
+				DrawCorridor(room, destination, corridorMap, startPos);
 			}
-
 		}
 	}
 
-	private bool TileExistsOnAnyDepth(Vector3Int position)
+	private void DrawCorridor(TileMapRoom source, TileMapRoom destination, Tilemap corridorMap, Vector2Int startPos)
 	{
-		foreach (KeyValuePair<int, Tilemap> tilemap in depthTilemaps.ToList())
+		Vector2Int direction = GetCorridorDirectionFromRooms(source, destination, out Vector2Int difference);
+		Vector2Int sourcePosition = Vector2Int.RoundToInt(source.centerPosition);
+
+
+
+		for (int i = 0; i < (int)Mathf.Abs(difference.x); i++)
 		{
-			if (tilemap.Value.HasTile(position))
+			int x = (int)(sourcePosition.x + (i * direction.x));
+			int y = (int)(sourcePosition.y);
+
+			Vector2Int position = new Vector2Int(x, y);
+			Vector3Int gridPosition = (Vector3Int)(position + new Vector2Int(startPos[0], startPos[1]));
+			corridorMap.SetTile(gridPosition, corridorTile);
+			AddSurroundingCollider(gridPosition);
+
+		}
+
+		for (int j = 0; j < (int)Mathf.Abs(difference.y); j++)
+		{
+			int x = (int)(sourcePosition.x + difference.x);
+			int y = (int)(sourcePosition.y + (j * direction.y));
+
+			Vector2Int position = new Vector2Int(x, y);
+			Vector3Int gridPosition = (Vector3Int)(position + new Vector2Int(startPos[0], startPos[1]));
+			corridorMap.SetTile(gridPosition, corridorTile);
+			AddSurroundingCollider(gridPosition);
+		}
+	}
+
+	private void AddSurroundingCollider(Vector3Int position)
+	{
+		for (int i = -1; i < 2; i++)
+		{
+			for (int j = -1; j < 2; j++)
+			{
+				if (!(i == 0 && j == 0))
+				{
+					Vector3Int gridPosition = new Vector3Int(i, j, 0) + position;
+					bool exist = TileExistsOnAnyDepth(rendererDepthMaps, gridPosition);
+					if (!exist)
+					{
+						colliderMap.SetTile(gridPosition, colliderTile);
+
+					}
+					else
+					{
+						colliderMap.SetTile(gridPosition, null);
+					}
+				}
+			}
+		}
+
+	}
+
+	private Vector2Int GetCorridorDirectionFromRooms(TileMapRoom source, TileMapRoom destination, out Vector2Int difference)
+	{
+		Vector2Int sourcePosition = Vector2Int.RoundToInt(source.centerPosition);
+		Vector2Int destinationPosition = Vector2Int.RoundToInt(destination.centerPosition);
+		difference = destinationPosition - sourcePosition;
+		int xDirection = 0;
+		if (difference.x != 0)
+		{
+			xDirection = difference.x > 0 ? 1 : -1;
+		}
+		int yDirection = 0;
+		if (difference.y != 0)
+		{
+			yDirection = difference.y > 0 ? 1 : -1;
+		}
+
+		return new Vector2Int(xDirection, yDirection);
+
+	}
+
+	private bool TileExistsOnAnyDepth(Dictionary<int, Tilemap> depths, Vector3Int position)
+	{
+		foreach (KeyValuePair<int, Tilemap> tilemap in depths.ToList())
+		{
+			if (tilemap.Value.GetTile(position) != null)
 			{
 				return true;
 			}
@@ -136,35 +150,63 @@ public class TileMapGrid : MonoBehaviour
 		return false;
 	}
 
-	private void AddRoomToTileMap(Tilemap tilemap, TileMapRoom room, Tilemap collider)
+	private void DrawRooms()
 	{
-		Color color = new Color((float)room.depth / (float)gridData.mapDepth, 0, 0);
-		//Color color = new Color(room.connectedRooms.Count, 0, 0);
-		//color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), 1, 1);
-		if (room.isMain)
+		foreach (TileMapRoom room in gridData.rooms)
 		{
-			color = Color.gray;
-		}
-
-		for (int x = 0; x < room.width; x++)
-		{
-			for (int y = 0; y < room.height; y++)
+			if (!rendererDepthMaps.TryGetValue(room.depth, out Tilemap tilemap))
 			{
-				Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth); //look at tielbase creatign surrounding colliders on creation
-				Vector3Int gridPosition = (Vector3Int)(room.position + new Vector2Int(startPos[0] + x, startPos[1] + y));
+				tilemap = CreateNewRendererDepthMap(room.depth);
+				rendererDepthMaps.Add(room.depth, tilemap);
 
-				tilemap.SetTile(gridPosition, roomTile);
-				tilemap.SetTileFlags(gridPosition, TileFlags.None);
-				tilemap.SetColor(gridPosition, color);
 			}
+			DrawRoom(tilemap, room);
 		}
+
 	}
 
-	private Tilemap CreateNewTileMap(int order)
+	private void DrawRoom(Tilemap tilemap, TileMapRoom room)
+	{
+		for (int x = -1; x < room.width + 1; x++)
+		{
+			for (int y = -1; y < room.height + 1; y++)
+			{
+				Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
+				Vector3Int gridPosition = (Vector3Int)(room.position + new Vector2Int(startPos[0] + x, startPos[1] + y));
+
+				if (!(x == -1 || y == -1 || x == room.width || y == room.height))
+				{
+					tilemap.SetTile(gridPosition, roomTile);
+					if (TileExistsOnAnyDepth(rendererDepthMaps, gridPosition))
+					{
+						colliderMap.SetTile(gridPosition, null);
+					}
+				}
+				else if(!TileExistsOnAnyDepth(rendererDepthMaps, gridPosition))
+				{	
+					colliderMap.SetTile(gridPosition, colliderTile);
+				}
+			}
+		}
+
+
+	}
+
+
+
+	private Tilemap CreateNewRendererDepthMap(int order)
 	{
 		Tilemap tilemap = Instantiate(tileMapPrefab, this.transform);
-		tilemap.name = order.ToString();
+		tilemap.name = "Renderer_" + order.ToString();
 		tilemap.GetComponent<TilemapRenderer>().sortingOrder = order;
+		tilemap.transform.localPosition += new Vector3(0, 0, -order * 10);
+		return tilemap;
+	}
+
+	private Tilemap CreateNewColliderDepthMap(int order)
+	{
+		Tilemap tilemap = Instantiate(colliderMapPrefab, this.transform);
+		tilemap.name = "Collider_" + order.ToString();
 		tilemap.transform.localPosition += new Vector3(0, 0, -order * 10);
 		return tilemap;
 	}

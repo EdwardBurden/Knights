@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 [CreateAssetMenu(menuName = "Room")]
-public class RoomTile : ColliderGeneratingTile
+public class RoomTile : FloorTile
 {
 
 }

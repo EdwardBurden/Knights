@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 [CreateAssetMenu(menuName = "Corridor")]
-public class CorridorTile : ColliderGeneratingTile
+public class CorridorTile : FloorTile
 {
 
 }
