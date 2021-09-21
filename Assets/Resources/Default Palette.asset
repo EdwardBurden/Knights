@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2f4f90e8f2376842af0654f2610da19, type: 3}
+  m_Name: Default Palette
+  m_EditorClassIdentifier: 
+  id: 1
+  roomTile: {fileID: 11400000, guid: 2e6c97ae4aab6ae43abce7cab59c648a, type: 2}
+  voidTile: {fileID: 11400000, guid: 63e8f6832925590489e98b0c7100d95f, type: 2}
+  corridorTile: {fileID: 11400000, guid: 8779d04863be7094faa83f04acbe2a4e, type: 2}
+  colliderTile: {fileID: 11400000, guid: a8c99cad3956e0d4a9ab822a24721974, type: 2}

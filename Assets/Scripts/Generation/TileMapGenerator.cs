@@ -27,8 +27,8 @@ public class TileMapGenerator : MonoBehaviour
 	public Vector3Int heights;
 	public float standard_divation;
 	public int roomsAmount;
-
 	public float mainsPercentage;
+	public GridPalette gridPalette;
 
 	private bool[,] gridPlaced;
 	private int MAX_ATTEMPTS = 5;
@@ -72,8 +72,8 @@ public class TileMapGenerator : MonoBehaviour
 		triangleEdges = TriangulationWrapper.ConvertIndicesToEdges(indices, vertices);
 		foreach (TriangleEdge edge in triangleEdges)
 		{
-			TileMapRoom source = gridData.rooms.FirstOrDefault(x => x.centerPosition == vertices[edge.v1]);
-			TileMapRoom destination = gridData.rooms.FirstOrDefault(x => x.centerPosition == vertices[edge.v2]);
+			RoomData source = gridData.rooms.FirstOrDefault(x => x.centerPosition == vertices[edge.v1]);
+			RoomData destination = gridData.rooms.FirstOrDefault(x => x.centerPosition == vertices[edge.v2]);
 			edge.source = source;
 			edge.destination = destination;
 		}
@@ -89,27 +89,40 @@ public class TileMapGenerator : MonoBehaviour
 
 		foreach (TriangleEdge edge in minimumTree)
 		{
-
-			TileMapRoom room = gridData.rooms.Find(x => x.roomID == edge.source.roomID);
+			RoomData room = gridData.rooms.Find(x => x.roomID == edge.source.roomID);
 			room.connectedRooms.Add(edge.destination.roomID);
 		}
 
+		DefineStartRoom(gridData);
 
-
+		DefineEndRoom(gridData);
+		gridData.paletteId = gridPalette.name;
 
 		return gridData;
 	}
 
-	private TileMapRoom GenerateRoom()
+	private void DefineEndRoom(GridData gridData)
 	{
-		TileMapRoom tileMapRoom = new TileMapRoom();
+		RoomData end = gridData.rooms.OrderBy(x => x.depth).ThenByDescending(x => Vector2.Distance(gridData.startRoom.centerPosition, x.centerPosition)).FirstOrDefault();
+		end.isEnd = true;
+	}
+
+	private void DefineStartRoom(GridData gridData)
+	{
+		RoomData start = gridData.rooms.OrderByDescending(x => x.depth).FirstOrDefault();
+		start.isStart = true;
+	}
+
+	private RoomData GenerateRoom()
+	{
+		RoomData tileMapRoom = new RoomData();
 		tileMapRoom.width = (int)Helper.NextGaussian(widths[1], standard_divation, widths[0], widths[2]);
 		tileMapRoom.height = (int)Helper.NextGaussian(heights[1], standard_divation, heights[0], heights[2]);
 		tileMapRoom.isMain = tileMapRoom.width * 1.25 > widths[1] && tileMapRoom.height * 1.25 > heights[1] || (Random.Range(0.0f, 1f) < mainsPercentage);
 		return tileMapRoom;
 	}
 
-	private bool TryPlaceRoom(TileMapRoom tileMapRoom, float maxDistance, Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
+	private bool TryPlaceRoom(RoomData tileMapRoom, float maxDistance, Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
 	{
 		bool canPlace = false;
 		int attmepts = 0;
@@ -132,9 +145,9 @@ public class TileMapGenerator : MonoBehaviour
 		}
 	}
 
-	public List<TileMapRoom> GenerateRooms(float maxDistance, Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
+	public List<RoomData> GenerateRooms(float maxDistance, Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
 	{
-		List<TileMapRoom> tileMapRooms = new List<TileMapRoom>();
+		List<RoomData> tileMapRooms = new List<RoomData>();
 		for (int room = 0; room < roomsAmount; room++)
 		{
 			tileMapRooms.Add(GenerateRoom());
@@ -154,65 +167,13 @@ public class TileMapGenerator : MonoBehaviour
 		return tileMapRooms;
 	}
 
-	/*private TileMapCorridor GenerateCorridor(TriangleEdge edge, Vector2Int relativeStartPosition, int width)
+	private bool CanPlaceRoom(RoomData tileMapRoom, Vector2Int position)
 	{
-		TileMapCorridor tileMapCorridor = new TileMapCorridor();
-		//tileMapCorridor.TileBase = corridorTile;
-		List<Vector3Int> positions = new List<Vector3Int>();
-
-
-		Vector3 end = (Vector3)vertices[edge.v2];
-		Vector3 start = (Vector3)vertices[edge.v1];
-		Vector3Int startInt = new Vector3Int((int)start.x, (int)start.y, 0);
-		Vector3Int endInt = new Vector3Int((int)end.x, (int)end.y, 0);
-		int xDiff = endInt.x - startInt.x;
-		int yDiff = endInt.y - startInt.y;
-		int xSign = xDiff > 0 ? 1 : -1;
-		int ySign = yDiff > 0 ? 1 : -1;
-
-
-		//REDO AT SOMEPOINT
-
-		for (int i = 0; i < Mathf.Abs(xDiff) + (width / 2); i++)
+		for (int i = -1; i < tileMapRoom.width + 1; i++)
 		{
-			Vector3Int gridPosition = startInt + new Vector3Int(xSign * i, 0, 0) - new Vector3Int(0, width / 2, 0);
-			for (int w = 0; w < width; w++)
+			for (int j = -1; j < tileMapRoom.height + 1; j++)
 			{
-				Vector3Int pos = gridPosition + new Vector3Int(0, w, 0);
-				if (gridPlaced[pos.x, pos.y] == null) //check all tilemap
-				{
-					gridPlaced[pos.x, pos.y] = corridorTile;
-					positions.Add(pos);
-				}
-			}
-		}
-
-		for (int i = 0; i < Mathf.Abs(yDiff) + (width / 2); i++)
-		{
-			Vector3Int gridPosition = startInt + new Vector3Int(xDiff, ySign * i, 0) - new Vector3Int(width / 2, 0, 0);
-			for (int w = 0; w < width; w++)
-			{
-				Vector3Int pos = gridPosition + new Vector3Int(w, 0, 0);
-				if (gridPlaced[pos.x, pos.y] == null) //check all tilemap
-				{
-					gridPlaced[pos.x, pos.y] = corridorTile;
-					positions.Add(pos);
-				}
-			}
-		}
-
-		tileMapCorridor.positions = positions;
-
-		return tileMapCorridor;
-	}*/
-
-	private bool CanPlaceRoom(TileMapRoom tileMapRoom, Vector2Int position)
-	{
-		for (int i = 0; i < tileMapRoom.width; i++)
-		{
-			for (int j = 0; j < tileMapRoom.height; j++)
-			{
-				if (position.x + i >= mapWidth || position.y + j >= mapHeight)
+				if (position.x + i >= mapWidth || position.x + i < 0 || position.y + j >= mapHeight || position.y + j < 0)
 				{
 					return false;
 				}
@@ -226,7 +187,7 @@ public class TileMapGenerator : MonoBehaviour
 		return true;
 	}
 
-	private void PlaceRoom(TileMapRoom tileMapRoom, Vector2Int position)
+	private void PlaceRoom(RoomData tileMapRoom, Vector2Int position)
 	{
 		tileMapRoom.position = position;
 		for (int i = 0; i < tileMapRoom.width; i++)
@@ -238,9 +199,9 @@ public class TileMapGenerator : MonoBehaviour
 		}
 	}
 
-	private void SetDepth(TileMapRoom tileMapRoom, float maxDistance, Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
+	private void SetDepth(RoomData tileMapRoom, float maxDistance, Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
 	{
-		float dist = Vector2Int.Distance(startposition, (Vector2Int)tileMapRoom.position + relativeStartPosition);
+		float dist = Vector2Int.Distance(startposition, Vector2Int.RoundToInt(tileMapRoom.centerPosition) + relativeStartPosition);
 		int inverse = topDepthAtStart ? 1 : 0;
 		tileMapRoom.depth = Mathf.RoundToInt(Mathf.Abs(inverse - (dist / maxDistance)) * mapDepth);
 	}

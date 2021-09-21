@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class TriangleEdge
 {
-	public TileMapRoom source;
-	public TileMapRoom destination;
+	public RoomData source;
+	public RoomData destination;
 	public int distance;
 	public int v1;
 	public int v2;

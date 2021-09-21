@@ -9,22 +9,21 @@ using static MinimumGraph;
 [ExecuteInEditMode]
 public class TileMapGrid : MonoBehaviour
 {
-	public TileBase roomTile;
+	//public TileBase roomTile;
+	//public TileBase corridorTile;
+	//public TileBase colliderTile;
 
-	public TileBase corridorTile;
-	public TileBase colliderTile;
 	public Tilemap tileMapPrefab;
 	public Tilemap colliderMapPrefab;
 
-	private GridData gridData;
+	public GridData gridData;
 	private Dictionary<int, Tilemap> rendererDepthMaps = new Dictionary<int, Tilemap>();
 	private Tilemap colliderMap;
+	private GridPalette gridPalette;
 
-	private IEnumerator coroutine;
-
-	public void LoadGrid(GridData gridData)
+	public void LoadGrid(GridData data)
 	{
-		this.gridData = gridData;
+		gridData = data;
 		rendererDepthMaps.Clear();
 		var tempList = transform.Cast<Transform>().ToList();
 		foreach (Transform map in tempList)
@@ -35,6 +34,8 @@ public class TileMapGrid : MonoBehaviour
 	Destroy(map.gameObject);
 #endif
 		}
+		gridPalette = Resources.Load<GridPalette>(data.paletteId);
+
 		colliderMap = CreateNewColliderDepthMap(0);
 		DrawRooms();
 		DrawCorridors();
@@ -47,22 +48,19 @@ public class TileMapGrid : MonoBehaviour
 
 	private void DrawCorridors()
 	{
-		foreach (TileMapRoom room in gridData.rooms)
+		foreach (RoomData room in gridData.rooms)
 		{
 			Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
-			Vector2Int roomCenterInt = new Vector2Int((int)room.centerPosition.x, (int)room.centerPosition.y);
-			Vector3Int gridPosition = (Vector3Int)(roomCenterInt + new Vector2Int(startPos[0], startPos[1]));
-
 			foreach (int connectedRoom in room.connectedRooms)
 			{
 				rendererDepthMaps.TryGetValue(room.depth, out Tilemap corridorMap);
-				TileMapRoom destination = gridData.rooms.FirstOrDefault(rooom => rooom.roomID == connectedRoom);
+				RoomData destination = gridData.rooms.FirstOrDefault(rooom => rooom.roomID == connectedRoom);
 				DrawCorridor(room, destination, corridorMap, startPos);
 			}
 		}
 	}
 
-	private void DrawCorridor(TileMapRoom source, TileMapRoom destination, Tilemap corridorMap, Vector2Int startPos)
+	private void DrawCorridor(RoomData source, RoomData destination, Tilemap corridorMap, Vector2Int startPos)
 	{
 		Vector2Int direction = GetCorridorDirectionFromRooms(source, destination, out Vector2Int difference);
 		Vector2Int sourcePosition = Vector2Int.RoundToInt(source.centerPosition);
@@ -73,11 +71,7 @@ public class TileMapGrid : MonoBehaviour
 		{
 			int x = (int)(sourcePosition.x + (i * direction.x));
 			int y = (int)(sourcePosition.y);
-
-			Vector2Int position = new Vector2Int(x, y);
-			Vector3Int gridPosition = (Vector3Int)(position + new Vector2Int(startPos[0], startPos[1]));
-			corridorMap.SetTile(gridPosition, corridorTile);
-			AddSurroundingCollider(gridPosition);
+			AddCorridorToTile(corridorMap, x, y, startPos);
 
 		}
 
@@ -85,12 +79,22 @@ public class TileMapGrid : MonoBehaviour
 		{
 			int x = (int)(sourcePosition.x + difference.x);
 			int y = (int)(sourcePosition.y + (j * direction.y));
-
-			Vector2Int position = new Vector2Int(x, y);
-			Vector3Int gridPosition = (Vector3Int)(position + new Vector2Int(startPos[0], startPos[1]));
-			corridorMap.SetTile(gridPosition, corridorTile);
-			AddSurroundingCollider(gridPosition);
+			AddCorridorToTile(corridorMap, x, y, startPos);
 		}
+	}
+
+	private void AddCorridorToTile(Tilemap corridorMap, int x, int y, Vector2Int startPos)
+	{
+		Vector2Int position = new Vector2Int(x, y);
+		Vector3Int gridPosition = (Vector3Int)(position + startPos);
+
+		if (!TileExistsOnAnyDepth(rendererDepthMaps, gridPosition))
+		{
+			corridorMap.SetTile(gridPosition, gridPalette.corridorTile);
+		}
+		AddSurroundingCollider(gridPosition);
+
+
 	}
 
 	private void AddSurroundingCollider(Vector3Int position)
@@ -105,7 +109,7 @@ public class TileMapGrid : MonoBehaviour
 					bool exist = TileExistsOnAnyDepth(rendererDepthMaps, gridPosition);
 					if (!exist)
 					{
-						colliderMap.SetTile(gridPosition, colliderTile);
+						colliderMap.SetTile(gridPosition, gridPalette.colliderTile);
 
 					}
 					else
@@ -118,7 +122,7 @@ public class TileMapGrid : MonoBehaviour
 
 	}
 
-	private Vector2Int GetCorridorDirectionFromRooms(TileMapRoom source, TileMapRoom destination, out Vector2Int difference)
+	private Vector2Int GetCorridorDirectionFromRooms(RoomData source, RoomData destination, out Vector2Int difference)
 	{
 		Vector2Int sourcePosition = Vector2Int.RoundToInt(source.centerPosition);
 		Vector2Int destinationPosition = Vector2Int.RoundToInt(destination.centerPosition);
@@ -152,7 +156,7 @@ public class TileMapGrid : MonoBehaviour
 
 	private void DrawRooms()
 	{
-		foreach (TileMapRoom room in gridData.rooms)
+		foreach (RoomData room in gridData.rooms)
 		{
 			if (!rendererDepthMaps.TryGetValue(room.depth, out Tilemap tilemap))
 			{
@@ -165,7 +169,7 @@ public class TileMapGrid : MonoBehaviour
 
 	}
 
-	private void DrawRoom(Tilemap tilemap, TileMapRoom room)
+	private void DrawRoom(Tilemap tilemap, RoomData room)
 	{
 		for (int x = -1; x < room.width + 1; x++)
 		{
@@ -176,15 +180,29 @@ public class TileMapGrid : MonoBehaviour
 
 				if (!(x == -1 || y == -1 || x == room.width || y == room.height))
 				{
-					tilemap.SetTile(gridPosition, roomTile);
+					tilemap.SetTile(gridPosition, gridPalette.roomTile);
+					if (room.isMain)
+					{
+						tilemap.SetColor(gridPosition, Color.blue);
+					}
+					if (room.isStart)
+					{
+						tilemap.SetColor(gridPosition, Color.red);
+					}
+
+					if (room.isEnd)
+					{
+						tilemap.SetColor(gridPosition, Color.yellow);
+					}
+
 					if (TileExistsOnAnyDepth(rendererDepthMaps, gridPosition))
 					{
 						colliderMap.SetTile(gridPosition, null);
 					}
 				}
-				else if(!TileExistsOnAnyDepth(rendererDepthMaps, gridPosition))
-				{	
-					colliderMap.SetTile(gridPosition, colliderTile);
+				else if (!TileExistsOnAnyDepth(rendererDepthMaps, gridPosition))
+				{
+					colliderMap.SetTile(gridPosition, gridPalette.colliderTile);
 				}
 			}
 		}
