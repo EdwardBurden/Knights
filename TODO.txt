@@ -1,0 +1,14 @@
+General
+ Use set Tile block and remove loop
+Corridors
+	Move Corridor generation to generater
+	Add check between room facing to avoid corners o corridor generation
+	Make Corridor data class with list of 2d positions
+Background
+	Add background tile to empty space around rooms and corridors
+
+Add Title with click to play button
+Add return to tile menu button
+
+Build for web
+Release Update / Do web stuff for the project

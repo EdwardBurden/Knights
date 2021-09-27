@@ -17,7 +17,7 @@ public class TileMapGridExporter : MonoBehaviour
 		TextAsset[] textAssets = Resources.LoadAll<TextAsset>(SAVE_FOLDER);
 		return textAssets;
 #else
-//get from persistant
+return null;
 #endif
 	}
 

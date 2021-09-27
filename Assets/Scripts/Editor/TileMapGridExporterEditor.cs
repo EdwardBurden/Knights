@@ -27,6 +27,7 @@ public class TileMapGridExporterEditor : Editor
 		{
 			TileMapGrid tileMapGrid = exporter.GetComponent<TileMapGrid>();
 			exporter.SaveGrid(tileMapGrid.gridData);
+			gridFiles = exporter.GetGridFiles();
 		}
 		EditorGUILayout.EndHorizontal();
 

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -81,6 +82,15 @@ public class TileMapGrid : MonoBehaviour
 			int y = (int)(sourcePosition.y + (j * direction.y));
 			AddCorridorToTile(corridorMap, x, y, startPos);
 		}
+	}
+
+	public Vector3 GetStartRoomPosition()
+	{
+		Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
+		Vector2Int center = Vector2Int.RoundToInt(gridData.startRoom.centerPosition);
+		Vector3Int gridPosition = (Vector3Int)(startPos + center);
+		Vector3 positon = rendererDepthMaps[gridData.startRoom.depth].CellToWorld(gridPosition);
+		return positon;
 	}
 
 	private void AddCorridorToTile(Tilemap corridorMap, int x, int y, Vector2Int startPos)
@@ -216,8 +226,8 @@ public class TileMapGrid : MonoBehaviour
 	{
 		Tilemap tilemap = Instantiate(tileMapPrefab, this.transform);
 		tilemap.name = "Renderer_" + order.ToString();
-		tilemap.GetComponent<TilemapRenderer>().sortingOrder = order;
-		tilemap.transform.localPosition += new Vector3(0, 0, -order * 10);
+		//tilemap.GetComponent<TilemapRenderer>().sortingOrder = order;
+		//tilemap.transform.localPosition += new Vector3(0, 0, -order * 10);
 		return tilemap;
 	}
 
@@ -225,7 +235,7 @@ public class TileMapGrid : MonoBehaviour
 	{
 		Tilemap tilemap = Instantiate(colliderMapPrefab, this.transform);
 		tilemap.name = "Collider_" + order.ToString();
-		tilemap.transform.localPosition += new Vector3(0, 0, -order * 10);
+		//tilemap.transform.localPosition += new Vector3(0, 0, -order * 10);
 		return tilemap;
 	}
 
