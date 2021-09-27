@@ -54,31 +54,85 @@ public class TileMapGenerator : MonoBehaviour
 
 	public GridData GenerateGrid(Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
 	{
-		gridPlaced = new bool[mapWidth, mapHeight];
-		minimumTree.Clear();
 		vertices.Clear();
 		indices.Clear();
 		triangleEdges.Clear();
-
-		float minDist = Vector2Int.Distance(startposition, relativeStartPosition);
-		float maxDist = Vector2Int.Distance(startposition, new Vector2Int(relativeStartPosition.x + mapWidth, relativeStartPosition.y + mapHeight));
-		float maxDistance = Mathf.Max(minDist, maxDist);
+		minimumTree.Clear();
+		gridPlaced = new bool[mapWidth, mapHeight];
 
 		GridData gridData = new GridData(startposition, startGridPositionType, mapWidth, mapHeight, mapDepth);
-		gridData.rooms = GenerateRooms(maxDistance, startposition, relativeStartPosition, topDepthAtStart);
 
+		gridData.rooms = GenerateRooms(startposition, relativeStartPosition, topDepthAtStart);
+		triangleEdges = GenerateTriangleEdge(gridData.rooms);
+		minimumTree = GenerateMinimumTree(triangleEdges, indices, vertices, gridData.rooms);
+		gridData.corridors = GenerateCorrridors(gridData);
+		gridData.paletteId = gridPalette.name;
 
-		bool success = TriangulationWrapper.Triangulate(gridData.rooms.Select(x => x.centerPosition).ToList(), out indices, out vertices);
-		triangleEdges = TriangulationWrapper.ConvertIndicesToEdges(indices, vertices);
+		DefineStartRoom(gridData);
+		DefineEndRoom(gridData);
+		return gridData;
+	}
+
+	private List<CorridorData> GenerateCorrridors(GridData gridData)
+	{
+		List<CorridorData> corridorDatas = new List<CorridorData>();
+		foreach (RoomData room in gridData.rooms)
+		{
+			foreach (int connectedRoom in room.connectedRooms)
+			{
+				RoomData destination = gridData.rooms.FirstOrDefault(rooom => rooom.roomID == connectedRoom);
+				CorridorData corridorData = GenerateCorridor(room, destination);
+				corridorDatas.Add(corridorData);
+			}
+		}
+		return corridorDatas;
+	}
+
+	private CorridorData GenerateCorridor(RoomData source, RoomData destination)
+	{
+		Vector2Int direction = Helper.GetCorridorDirectionFromRooms(source, destination, out Vector2Int difference);
+		Vector2Int sourcePosition = Vector2Int.RoundToInt(source.centerPosition);
+		CorridorData corridorData = new CorridorData();
+		corridorData.startRoomID = source.roomID;
+		corridorData.endRoomID = destination.roomID;
+
+		for (int i = 0; i < (int)Mathf.Abs(difference.x); i++)
+		{
+			int x = (int)(sourcePosition.x + (i * direction.x));
+			int y = (int)(sourcePosition.y);
+			Vector2Int position = new Vector2Int(x, y);
+			corridorData.corridorPositions.Add(position);
+
+		}
+
+		for (int j = 0; j < (int)Mathf.Abs(difference.y); j++)
+		{
+			int x = (int)(sourcePosition.x + difference.x);
+			int y = (int)(sourcePosition.y + (j * direction.y));
+			Vector2Int position = new Vector2Int(x, y);
+			corridorData.corridorPositions.Add(position);
+		}
+		corridorData.corridorPositions = corridorData.corridorPositions.Distinct().ToList();
+		return corridorData;
+	}
+
+	private List<TriangleEdge> GenerateTriangleEdge(List<RoomData> rooms)
+	{
+		List<Vector2> roomPositions = rooms.Select(x => x.centerPosition).ToList();
+		TriangulationWrapper.Triangulate(roomPositions, out indices, out vertices);
+		List<TriangleEdge> triangleEdges = TriangulationWrapper.ConvertIndicesToEdges(indices, vertices);
 		foreach (TriangleEdge edge in triangleEdges)
 		{
-			RoomData source = gridData.rooms.FirstOrDefault(x => x.centerPosition == vertices[edge.v1]);
-			RoomData destination = gridData.rooms.FirstOrDefault(x => x.centerPosition == vertices[edge.v2]);
-			edge.source = source;
-			edge.destination = destination;
+			edge.source = rooms.FirstOrDefault(x => x.centerPosition == vertices[edge.v1]); ;
+			edge.destination = rooms.FirstOrDefault(x => x.centerPosition == vertices[edge.v2]); ;
 		}
+		return triangleEdges;
+	}
+
+	private List<TriangleEdge> GenerateMinimumTree(List<TriangleEdge> triangleEdges, List<int> indices, List<Vector2> vertices , List<RoomData> rooms)
+	{
 		Graph graph = new Graph(triangleEdges, indices, vertices);
-		minimumTree = MinimumGraph.Kruskal(graph).ToList();
+		List<TriangleEdge> minimumTree = MinimumGraph.Kruskal(graph).ToList();
 		for (int i = 0; i < triangleEdges.Count; i++)
 		{
 			if (UnityEngine.Random.Range(0.0f, 1.0f) < includeExtraEdgesPercent && !minimumTree.Contains(triangleEdges[i]))
@@ -89,16 +143,11 @@ public class TileMapGenerator : MonoBehaviour
 
 		foreach (TriangleEdge edge in minimumTree)
 		{
-			RoomData room = gridData.rooms.Find(x => x.roomID == edge.source.roomID);
+			RoomData room = rooms.Find(x => x.roomID == edge.source.roomID);
 			room.connectedRooms.Add(edge.destination.roomID);
 		}
 
-		DefineStartRoom(gridData);
-
-		DefineEndRoom(gridData);
-		gridData.paletteId = gridPalette.name;
-
-		return gridData;
+		return minimumTree;
 	}
 
 	private void DefineEndRoom(GridData gridData)
@@ -145,8 +194,12 @@ public class TileMapGenerator : MonoBehaviour
 		}
 	}
 
-	public List<RoomData> GenerateRooms(float maxDistance, Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
+	public List<RoomData> GenerateRooms(Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
 	{
+		float minDist = Vector2Int.Distance(startposition, relativeStartPosition);
+		float maxDist = Vector2Int.Distance(startposition, new Vector2Int(relativeStartPosition.x + mapWidth, relativeStartPosition.y + mapHeight));
+		float maxDistance = Mathf.Max(minDist, maxDist);
+
 		List<RoomData> tileMapRooms = new List<RoomData>();
 		for (int room = 0; room < roomsAmount; room++)
 		{

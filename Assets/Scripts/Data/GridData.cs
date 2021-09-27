@@ -15,7 +15,9 @@ public class GridData //to be json
 	public int mapWidth;
 	public int mapHeight;
 	public int mapDepth;
+
 	public List<RoomData> rooms;
+	public List<CorridorData> corridors;
 
 	public GridData(Vector2Int startposition, StartGridPosition startGridPosition, int mapWidth, int mapHeight, int mapDepth)
 	{
@@ -27,6 +29,13 @@ public class GridData //to be json
 		this.mapHeight = mapHeight;
 		this.mapDepth = mapDepth;
 		rooms = new List<RoomData>();
+		corridors = new List<CorridorData>();
+	}
+
+	public RoomData GetRoom(int id)
+	{
+		return rooms.FirstOrDefault(x => x.roomID == id);
+
 	}
 
 	public RoomData startRoom => rooms.FirstOrDefault(x => x.isStart);

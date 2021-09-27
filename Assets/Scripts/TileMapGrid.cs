@@ -10,10 +10,6 @@ using static MinimumGraph;
 [ExecuteInEditMode]
 public class TileMapGrid : MonoBehaviour
 {
-	//public TileBase roomTile;
-	//public TileBase corridorTile;
-	//public TileBase colliderTile;
-
 	public Tilemap tileMapPrefab;
 	public Tilemap colliderMapPrefab;
 
@@ -21,6 +17,14 @@ public class TileMapGrid : MonoBehaviour
 	private Dictionary<int, Tilemap> rendererDepthMaps = new Dictionary<int, Tilemap>();
 	private Tilemap colliderMap;
 	private GridPalette gridPalette;
+	public Vector3 GetStartRoomPosition()
+	{
+		Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
+		Vector2Int center = Vector2Int.RoundToInt(gridData.startRoom.centerPosition);
+		Vector3Int gridPosition = (Vector3Int)(startPos + center);
+		Vector3 positon = rendererDepthMaps[gridData.startRoom.depth].CellToWorld(gridPosition);
+		return positon;
+	}
 
 	public void LoadGrid(GridData data)
 	{
@@ -49,53 +53,24 @@ public class TileMapGrid : MonoBehaviour
 
 	private void DrawCorridors()
 	{
-		foreach (RoomData room in gridData.rooms)
+		foreach (CorridorData corridor in gridData.corridors)
 		{
 			Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
-			foreach (int connectedRoom in room.connectedRooms)
+			RoomData startRoom = gridData.GetRoom(corridor.startRoomID);
+			RoomData endRoom = gridData.GetRoom(corridor.endRoomID);
+			rendererDepthMaps.TryGetValue(startRoom.depth, out Tilemap corridorMap);
+			foreach (Vector2 position in corridor.corridorPositions)
 			{
-				rendererDepthMaps.TryGetValue(room.depth, out Tilemap corridorMap);
-				RoomData destination = gridData.rooms.FirstOrDefault(rooom => rooom.roomID == connectedRoom);
-				DrawCorridor(room, destination, corridorMap, startPos);
+				AddCorridorToTile(corridorMap, Vector2Int.RoundToInt(position));
 			}
+
+
 		}
 	}
 
-	private void DrawCorridor(RoomData source, RoomData destination, Tilemap corridorMap, Vector2Int startPos)
-	{
-		Vector2Int direction = GetCorridorDirectionFromRooms(source, destination, out Vector2Int difference);
-		Vector2Int sourcePosition = Vector2Int.RoundToInt(source.centerPosition);
-
-
-
-		for (int i = 0; i < (int)Mathf.Abs(difference.x); i++)
-		{
-			int x = (int)(sourcePosition.x + (i * direction.x));
-			int y = (int)(sourcePosition.y);
-			AddCorridorToTile(corridorMap, x, y, startPos);
-
-		}
-
-		for (int j = 0; j < (int)Mathf.Abs(difference.y); j++)
-		{
-			int x = (int)(sourcePosition.x + difference.x);
-			int y = (int)(sourcePosition.y + (j * direction.y));
-			AddCorridorToTile(corridorMap, x, y, startPos);
-		}
-	}
-
-	public Vector3 GetStartRoomPosition()
+	private void AddCorridorToTile(Tilemap corridorMap, Vector2Int position)
 	{
 		Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
-		Vector2Int center = Vector2Int.RoundToInt(gridData.startRoom.centerPosition);
-		Vector3Int gridPosition = (Vector3Int)(startPos + center);
-		Vector3 positon = rendererDepthMaps[gridData.startRoom.depth].CellToWorld(gridPosition);
-		return positon;
-	}
-
-	private void AddCorridorToTile(Tilemap corridorMap, int x, int y, Vector2Int startPos)
-	{
-		Vector2Int position = new Vector2Int(x, y);
 		Vector3Int gridPosition = (Vector3Int)(position + startPos);
 
 		if (!TileExistsOnAnyDepth(rendererDepthMaps, gridPosition))
@@ -129,26 +104,6 @@ public class TileMapGrid : MonoBehaviour
 				}
 			}
 		}
-
-	}
-
-	private Vector2Int GetCorridorDirectionFromRooms(RoomData source, RoomData destination, out Vector2Int difference)
-	{
-		Vector2Int sourcePosition = Vector2Int.RoundToInt(source.centerPosition);
-		Vector2Int destinationPosition = Vector2Int.RoundToInt(destination.centerPosition);
-		difference = destinationPosition - sourcePosition;
-		int xDirection = 0;
-		if (difference.x != 0)
-		{
-			xDirection = difference.x > 0 ? 1 : -1;
-		}
-		int yDirection = 0;
-		if (difference.y != 0)
-		{
-			yDirection = difference.y > 0 ? 1 : -1;
-		}
-
-		return new Vector2Int(xDirection, yDirection);
 
 	}
 
@@ -219,8 +174,6 @@ public class TileMapGrid : MonoBehaviour
 
 
 	}
-
-
 
 	private Tilemap CreateNewRendererDepthMap(int order)
 	{

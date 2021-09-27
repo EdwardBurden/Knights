@@ -48,4 +48,24 @@ public class Helper //rename later maybe
 		}
 
 	}
+
+	public static Vector2Int GetCorridorDirectionFromRooms(RoomData source, RoomData destination, out Vector2Int difference)
+	{
+		Vector2Int sourcePosition = Vector2Int.RoundToInt(source.centerPosition);
+		Vector2Int destinationPosition = Vector2Int.RoundToInt(destination.centerPosition);
+		difference = destinationPosition - sourcePosition;
+		int xDirection = 0;
+		if (difference.x != 0)
+		{
+			xDirection = difference.x > 0 ? 1 : -1;
+		}
+		int yDirection = 0;
+		if (difference.y != 0)
+		{
+			yDirection = difference.y > 0 ? 1 : -1;
+		}
+
+		return new Vector2Int(xDirection, yDirection);
+
+	}
 }

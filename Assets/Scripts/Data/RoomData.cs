@@ -28,4 +28,5 @@ public class RoomData //tobe json
 	}
 
 	public Vector2 centerPosition => new Vector2(position.x + (width * 0.5f), position.y + (height * 0.5f));
+
 }
