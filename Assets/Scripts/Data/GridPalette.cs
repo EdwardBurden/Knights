@@ -6,11 +6,12 @@ using UnityEngine.Tilemaps;
 [CreateAssetMenu(menuName = "ScriptableObject/GridPalette")]
 public class GridPalette : ScriptableObject
 {
-	public FloorTile roomTile;
+	public RoomTile roomTile;
 
 	public TileBase voidTile;
 
-	public FloorTile corridorTile;
+	public CorridorTile corridorTile;
 
 	public ColliderTile colliderTile;
+	public WallTile wallTile;
 }

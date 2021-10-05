@@ -14,6 +14,13 @@ using Random = UnityEngine.Random;
 [ExecuteInEditMode]
 public class TileMapGenerator : MonoBehaviour
 {
+	private enum FacingDirection
+	{
+		FacingX,
+		FacingY,
+		NONE
+	}
+
 	//on inspector
 	public Vector2Int startposition;
 	public StartGridPosition startGridPositionType = StartGridPosition.Top;
@@ -48,7 +55,7 @@ public class TileMapGenerator : MonoBehaviour
 	{
 		Vector2Int trueStartPosition = Helper.GetStartPosition(startGridPositionType, startposition, mapHeight, mapWidth);
 		GridData gridData = GenerateGrid(startposition, trueStartPosition, topDepthAtStart);
-
+		gridData.seed = (int)System.DateTime.Now.Ticks;
 		GetComponent<TileMapGrid>().LoadGrid(gridData);
 	}
 
@@ -80,15 +87,130 @@ public class TileMapGenerator : MonoBehaviour
 		{
 			foreach (int connectedRoom in room.connectedRooms)
 			{
+				CorridorData corridorData = null;
 				RoomData destination = gridData.rooms.FirstOrDefault(rooom => rooom.roomID == connectedRoom);
-				CorridorData corridorData = GenerateCorridor(room, destination);
+
+				FacingDirection facing = IsRoomFacing(room, destination);
+				if (facing == FacingDirection.NONE)
+				{
+					corridorData = GenerateCornerCorridor(room, destination);
+				}
+				else
+				{
+					corridorData = GenerateStraightCorridor(room, destination, facing);
+				}
 				corridorDatas.Add(corridorData);
 			}
 		}
 		return corridorDatas;
 	}
 
-	private CorridorData GenerateCorridor(RoomData source, RoomData destination)
+	private CorridorData GenerateStraightCorridor(RoomData source, RoomData destination, FacingDirection facingDirection)
+	{
+		Vector2Int sourcePosition = Vector2Int.RoundToInt(source.centerPosition);
+		Vector2Int direction = Helper.GetCorridorDirectionFromRooms(source, destination, out Vector2Int difference);
+		CorridorData corridorData = new CorridorData();
+		corridorData.startRoomID = source.roomID;
+		corridorData.endRoomID = destination.roomID;
+		int center = 0;
+		switch (facingDirection)
+		{
+			case FacingDirection.FacingX:
+
+				center = GetCenterPointInBounds(source.position.x, source.width, destination.position.x, destination.width);
+				for (int j = 0; j < (int)Mathf.Abs(difference.y); j++)
+				{
+					int x = (int)(center);
+					int y = (int)(sourcePosition.y + (j * direction.y));
+					Vector2Int position = new Vector2Int(x, y);
+					corridorData.corridorPositions.Add(position);
+				}
+
+				break;
+			case FacingDirection.FacingY:
+				center = GetCenterPointInBounds(source.position.y, source.height, destination.position.y, destination.height);
+				for (int i = 0; i < (int)Mathf.Abs(difference.x); i++)
+				{
+					int x = (int)(sourcePosition.x + (i * direction.x));
+					int y = (int)(center);
+					Vector2Int position = new Vector2Int(x, y);
+					corridorData.corridorPositions.Add(position);
+				}
+				break;
+			default:
+				break;
+		}
+		return corridorData;
+	}
+
+	private int GetCenterPointInBounds(int start, int startLength, int end, int endLength)
+	{
+		Vector2 source = new Vector2(start, start + startLength);
+		Vector2 destiantion = new Vector2(end, end + endLength);
+		float high = source.y < destiantion.y ? source.y : destiantion.y;
+		float low = source.x > destiantion.x ? source.x : destiantion.x;
+		int center = (int)(low + ((high - low) / 2.0f));
+		return center;
+	}
+
+
+	private FacingDirection IsRoomFacing(RoomData source, RoomData destination)
+	{
+		List<Vector2Int> sourcePositions = new List<Vector2Int>();
+		for (int i = 0; i < source.width; i++)
+		{
+			sourcePositions.Add(source.position + new Vector2Int(i, 0));
+		}
+		for (int i = 0; i < source.height; i++)
+		{
+			sourcePositions.Add(source.position + new Vector2Int(0, i));
+		}
+
+		int count = 0;
+		for (int i = 0; i < destination.width; i++)
+		{
+			Vector2Int pos = destination.position + new Vector2Int(i, 0);
+			if (sourcePositions.Any(x => x.x == pos.x))
+			{
+				count++;
+			}
+		}
+		if (count > 1)
+		{
+			return FacingDirection.FacingX;
+		}
+
+		count = 0;
+		for (int i = 0; i < destination.height; i++)
+		{
+			Vector2Int pos = destination.position + new Vector2Int(0, i);
+			if (sourcePositions.Any(x => x.y == pos.y))
+			{
+				count++;
+			}
+		}
+		if (count > 1)
+		{
+			return FacingDirection.FacingY;
+		}
+
+		/*Vector2 xSource = new Vector2(source.position.x, source.position.x + source.width - 1);
+		Vector2 xDestination = new Vector2(destination.position.x, destination.position.x + destination.width - 1);
+		if (!(xSource.x > xDestination.y || xSource.y < xDestination.x))
+		{
+			return FacingDirection.FacingX;
+		}
+
+		Vector2 ySource = new Vector2(source.position.y, source.position.y + source.heigh);
+		Vector2 yDestination = new Vector2(destination.position.y, destination.position.y + destination.height - 1);
+		if (!(ySource.x > yDestination.y || ySource.y < yDestination.x))
+		{
+			return FacingDirection.FacingY;
+		}*/
+		return FacingDirection.NONE;
+	}
+
+	private CorridorData GenerateCornerCorridor(RoomData source, RoomData destination)
 	{
 		Vector2Int direction = Helper.GetCorridorDirectionFromRooms(source, destination, out Vector2Int difference);
 		Vector2Int sourcePosition = Vector2Int.RoundToInt(source.centerPosition);
@@ -101,8 +223,11 @@ public class TileMapGenerator : MonoBehaviour
 			int x = (int)(sourcePosition.x + (i * direction.x));
 			int y = (int)(sourcePosition.y);
 			Vector2Int position = new Vector2Int(x, y);
-			corridorData.corridorPositions.Add(position);
-
+			if (gridPlaced[x, y] == false)
+			{
+				corridorData.corridorPositions.Add(position);
+				gridPlaced[x, y] = true;
+			}
 		}
 
 		for (int j = 0; j < (int)Mathf.Abs(difference.y); j++)
@@ -110,11 +235,16 @@ public class TileMapGenerator : MonoBehaviour
 			int x = (int)(sourcePosition.x + difference.x);
 			int y = (int)(sourcePosition.y + (j * direction.y));
 			Vector2Int position = new Vector2Int(x, y);
-			corridorData.corridorPositions.Add(position);
+			if (gridPlaced[x, y] == false)
+			{
+				corridorData.corridorPositions.Add(position);
+				gridPlaced[x, y] = true;
+			}
 		}
 		corridorData.corridorPositions = corridorData.corridorPositions.Distinct().ToList();
 		return corridorData;
 	}
+
 
 	private List<TriangleEdge> GenerateTriangleEdge(List<RoomData> rooms)
 	{
@@ -129,7 +259,7 @@ public class TileMapGenerator : MonoBehaviour
 		return triangleEdges;
 	}
 
-	private List<TriangleEdge> GenerateMinimumTree(List<TriangleEdge> triangleEdges, List<int> indices, List<Vector2> vertices , List<RoomData> rooms)
+	private List<TriangleEdge> GenerateMinimumTree(List<TriangleEdge> triangleEdges, List<int> indices, List<Vector2> vertices, List<RoomData> rooms)
 	{
 		Graph graph = new Graph(triangleEdges, indices, vertices);
 		List<TriangleEdge> minimumTree = MinimumGraph.Kruskal(graph).ToList();

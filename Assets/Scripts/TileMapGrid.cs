@@ -6,30 +6,58 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using static MinimumGraph;
+using Random = UnityEngine.Random;
 
 [ExecuteInEditMode]
 public class TileMapGrid : MonoBehaviour
 {
-	public Tilemap tileMapPrefab;
+	public Tilemap floorTileMapPrefab;
+	public Tilemap wallTileMapPrefab;
 	public Tilemap colliderMapPrefab;
 
 	public GridData gridData;
-	private Dictionary<int, Tilemap> rendererDepthMaps = new Dictionary<int, Tilemap>();
+	private Dictionary<int, Tilemap> floorMaps = new Dictionary<int, Tilemap>();
 	private Tilemap colliderMap;
+	private Tilemap wallMap;
 	private GridPalette gridPalette;
 	public Vector3 GetStartRoomPosition()
 	{
 		Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
 		Vector2Int center = Vector2Int.RoundToInt(gridData.startRoom.centerPosition);
 		Vector3Int gridPosition = (Vector3Int)(startPos + center);
-		Vector3 positon = rendererDepthMaps[gridData.startRoom.depth].CellToWorld(gridPosition);
+		Vector3 positon = floorMaps[gridData.startRoom.depth].CellToWorld(gridPosition);
 		return positon;
+	}
+
+	public bool HasFloorTile(Vector3Int position)
+	{
+		foreach (KeyValuePair<int, Tilemap> tilemap in floorMaps.ToList())
+		{
+			if (tilemap.Value.GetTile(position) == gridPalette.roomTile)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool HasCorridorTile(Vector3Int position)
+	{
+		foreach (KeyValuePair<int, Tilemap> tilemap in floorMaps.ToList())
+		{
+			if (tilemap.Value.GetTile(position) == gridPalette.corridorTile)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public void LoadGrid(GridData data)
 	{
 		gridData = data;
-		rendererDepthMaps.Clear();
+		Random.InitState(gridData.seed);
+		floorMaps.Clear();
 		var tempList = transform.Cast<Transform>().ToList();
 		foreach (Transform map in tempList)
 		{
@@ -40,14 +68,31 @@ public class TileMapGrid : MonoBehaviour
 #endif
 		}
 		gridPalette = Resources.Load<GridPalette>(data.paletteId);
+		CreateFloorMaps();
 
-		colliderMap = CreateNewColliderDepthMap(0);
-		DrawRooms();
+		colliderMap = CreateColliderMap(0);
+		wallMap = CreateWallMap(0);
 		DrawCorridors();
+		DrawRooms();
 
-		foreach (KeyValuePair<int, Tilemap> tilemap in rendererDepthMaps.ToList())
+
+
+		foreach (KeyValuePair<int, Tilemap> tilemap in floorMaps.ToList())
 		{
 			tilemap.Value.RefreshAllTiles();
+		}
+		wallMap.RefreshAllTiles();
+	}
+
+	private void CreateFloorMaps()
+	{
+		foreach (RoomData room in gridData.rooms)
+		{
+			if (!floorMaps.TryGetValue(room.depth, out Tilemap tilemap))
+			{
+				tilemap = CreateFloorMap(room.depth);
+				floorMaps.Add(room.depth, tilemap);
+			}
 		}
 	}
 
@@ -58,13 +103,11 @@ public class TileMapGrid : MonoBehaviour
 			Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
 			RoomData startRoom = gridData.GetRoom(corridor.startRoomID);
 			RoomData endRoom = gridData.GetRoom(corridor.endRoomID);
-			rendererDepthMaps.TryGetValue(startRoom.depth, out Tilemap corridorMap);
+			floorMaps.TryGetValue(startRoom.depth, out Tilemap corridorMap);
 			foreach (Vector2 position in corridor.corridorPositions)
 			{
 				AddCorridorToTile(corridorMap, Vector2Int.RoundToInt(position));
 			}
-
-
 		}
 	}
 
@@ -73,13 +116,11 @@ public class TileMapGrid : MonoBehaviour
 		Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
 		Vector3Int gridPosition = (Vector3Int)(position + startPos);
 
-		if (!TileExistsOnAnyDepth(rendererDepthMaps, gridPosition))
+		if (!TileExistsOnAnyDepth(floorMaps, gridPosition))
 		{
 			corridorMap.SetTile(gridPosition, gridPalette.corridorTile);
 		}
 		AddSurroundingCollider(gridPosition);
-
-
 	}
 
 	private void AddSurroundingCollider(Vector3Int position)
@@ -91,11 +132,10 @@ public class TileMapGrid : MonoBehaviour
 				if (!(i == 0 && j == 0))
 				{
 					Vector3Int gridPosition = new Vector3Int(i, j, 0) + position;
-					bool exist = TileExistsOnAnyDepth(rendererDepthMaps, gridPosition);
+					bool exist = TileExistsOnAnyDepth(floorMaps, gridPosition);
 					if (!exist)
 					{
 						colliderMap.SetTile(gridPosition, gridPalette.colliderTile);
-
 					}
 					else
 					{
@@ -104,7 +144,6 @@ public class TileMapGrid : MonoBehaviour
 				}
 			}
 		}
-
 	}
 
 	private bool TileExistsOnAnyDepth(Dictionary<int, Tilemap> depths, Vector3Int position)
@@ -123,15 +162,9 @@ public class TileMapGrid : MonoBehaviour
 	{
 		foreach (RoomData room in gridData.rooms)
 		{
-			if (!rendererDepthMaps.TryGetValue(room.depth, out Tilemap tilemap))
-			{
-				tilemap = CreateNewRendererDepthMap(room.depth);
-				rendererDepthMaps.Add(room.depth, tilemap);
-
-			}
+			floorMaps.TryGetValue(room.depth, out Tilemap tilemap);
 			DrawRoom(tilemap, room);
 		}
-
 	}
 
 	private void DrawRoom(Tilemap tilemap, RoomData room)
@@ -146,6 +179,15 @@ public class TileMapGrid : MonoBehaviour
 				if (!(x == -1 || y == -1 || x == room.width || y == room.height))
 				{
 					tilemap.SetTile(gridPosition, gridPalette.roomTile);
+					if (TileExistsOnAnyDepth(floorMaps, gridPosition))
+					{
+						colliderMap.SetTile(gridPosition, null);
+					}
+					if ((x == 0 || y == 0 || x == room.width - 1 || y == room.height - 1))
+					{
+						wallMap.SetTile(gridPosition, gridPalette.wallTile);
+					}
+					//colour
 					if (room.isMain)
 					{
 						tilemap.SetColor(gridPosition, Color.blue);
@@ -159,32 +201,35 @@ public class TileMapGrid : MonoBehaviour
 					{
 						tilemap.SetColor(gridPosition, Color.yellow);
 					}
-
-					if (TileExistsOnAnyDepth(rendererDepthMaps, gridPosition))
-					{
-						colliderMap.SetTile(gridPosition, null);
-					}
+					//colour
 				}
-				else if (!TileExistsOnAnyDepth(rendererDepthMaps, gridPosition))
+				else if (!TileExistsOnAnyDepth(floorMaps, gridPosition))
 				{
 					colliderMap.SetTile(gridPosition, gridPalette.colliderTile);
 				}
 			}
 		}
-
-
 	}
 
-	private Tilemap CreateNewRendererDepthMap(int order)
+	private Tilemap CreateFloorMap(int order)
 	{
-		Tilemap tilemap = Instantiate(tileMapPrefab, this.transform);
-		tilemap.name = "Renderer_" + order.ToString();
+		Tilemap tilemap = Instantiate(floorTileMapPrefab, this.transform);
+		tilemap.name = "Floor_" + order.ToString();
 		//tilemap.GetComponent<TilemapRenderer>().sortingOrder = order;
 		//tilemap.transform.localPosition += new Vector3(0, 0, -order * 10);
 		return tilemap;
 	}
 
-	private Tilemap CreateNewColliderDepthMap(int order)
+	private Tilemap CreateWallMap(int order)
+	{
+		Tilemap tilemap = Instantiate(wallTileMapPrefab, this.transform);
+		tilemap.name = "Wall_" + order.ToString();
+		//tilemap.GetComponent<TilemapRenderer>().sortingOrder = order;
+		//tilemap.transform.localPosition += new Vector3(0, 0, -order * 10);
+		return tilemap;
+	}
+
+	private Tilemap CreateColliderMap(int order)
 	{
 		Tilemap tilemap = Instantiate(colliderMapPrefab, this.transform);
 		tilemap.name = "Collider_" + order.ToString();

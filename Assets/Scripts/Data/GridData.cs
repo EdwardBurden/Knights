@@ -18,6 +18,7 @@ public class GridData //to be json
 
 	public List<RoomData> rooms;
 	public List<CorridorData> corridors;
+	public int seed;
 
 	public GridData(Vector2Int startposition, StartGridPosition startGridPosition, int mapWidth, int mapHeight, int mapDepth)
 	{
