@@ -17,11 +17,11 @@ public class RoomData //tobe json
 	public bool isStart;
 	public bool isEnd;
 
-	public List<int> connectedRooms;
+	public List<CorridorData> corridors;
 
 	public RoomData()
 	{
-		this.connectedRooms = new List<int>();
+		this.corridors = new List<CorridorData>();
 		isMain = false;
 		isStart = false;
 		isEnd = false;

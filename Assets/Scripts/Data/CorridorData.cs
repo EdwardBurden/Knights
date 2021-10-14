@@ -9,10 +9,10 @@ public class CorridorData
 	public int corridorID;
 	public int startRoomID;
 	public int endRoomID;
-	public List<Vector2> corridorPositions;
+	public List<Vector2Int> corridorPositions; 
 
 	public CorridorData()
 	{
-		corridorPositions = new List<Vector2>();
+		corridorPositions = new List<Vector2Int>();
 	}
 }

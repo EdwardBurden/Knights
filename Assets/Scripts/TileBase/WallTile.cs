@@ -29,6 +29,10 @@ public class WallTile : Tile
 	public override void GetTileData(Vector3Int location, ITilemap tilemap, ref TileData tileData)
 	{
 		int mask = GetMask(location);
+		//REMOVE THIS ONKLY FOR TESTING
+
+
+
 		int index = GetIndex((byte)mask);
 		if (index >= 0 && index < m_Sprites.Length)
 		{
@@ -55,14 +59,10 @@ public class WallTile : Tile
 		{
 			for (int xd = -1; xd <= 1; xd++)
 			{
+			
 				if (xd == 0 && yd == 0)
 				{
 					continue;
-				}
-				Vector3Int position = location + new Vector3Int(xd, yd, 0);
-				if (tileMapGrid.HasCorridorTile(position))
-				{
-					return 0; //temp for now
 				}
 				mask += tileMapGrid.HasFloorTile(location + new Vector3Int(xd, yd, 0)) ? binary : 0;
 				binary *= 2;
@@ -80,14 +80,15 @@ public class WallTile : Tile
 	// The following determines which sprite to use based on the number of adjacent RoadTiles
 	private int GetIndex(byte mask)
 	{
+		return 1;
 		switch (mask)
 		{
-			case 208: return 1; //Bottom Corner
-			case 104: return 1; //Right Corner
-			case 22: return 1; //Left Corner
-			case 11: return 1; //Top Corner
-			case 0: return 2; //Invisible
-			default: return 0; //remove
+			case 208: return 2; //Bottom Corner
+			case 104: return 3; //Right Corner
+			case 22: return 4; //Left Corner
+			case 11: return 5; //Top Corner
+			case 0: return 0; //null
+			default: return 1; //Temp for now blue floor to show is wall
 		}
 		return -1;
 	}

@@ -14,4 +14,5 @@ public class GridPalette : ScriptableObject
 
 	public ColliderTile colliderTile;
 	public WallTile wallTile;
+	public DoorTile doorTile;
 }

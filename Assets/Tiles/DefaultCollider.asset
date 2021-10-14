@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f84d6632f7e52c4294263aad831aae3, type: 3}
   m_Name: DefaultCollider
   m_EditorClassIdentifier: 
-  m_Sprite: {fileID: -8993607713355408221, guid: f1347bcb66d26464f8fe13701067da6f,
-    type: 3}
+  m_Sprite: {fileID: 21300000, guid: 69fed2956ad975a46b39f821df529d4e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1
@@ -33,5 +32,5 @@ MonoBehaviour:
     e32: 0
     e33: 1
   m_InstancedGameObject: {fileID: 0}
-  m_Flags: -1
+  m_Flags: 0
   m_ColliderType: 2

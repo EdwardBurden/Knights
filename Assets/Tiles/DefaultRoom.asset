@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ff2ac43ed64a8d4f8d85a8d854a7a89, type: 3}
   m_Name: DefaultRoom
   m_EditorClassIdentifier: 
-  m_Sprite: {fileID: 21300000, guid: c5fbca28bc15b8e4eb0404db1d09b510, type: 3}
+  m_Sprite: {fileID: 6511404109149442792, guid: ac70385d0bb767c4db96b139a74748ee,
+    type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1

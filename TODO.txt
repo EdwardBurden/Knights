@@ -1,8 +1,10 @@
 General
  Use set Tile block and remove loop
-add seed number to generation
-use seed for everything else but floorlayout
+add door spawn
+add sprites for wall corners
+use seed for everything else but floorlayout and wall /door
 
+test lighting
 Background
 	Add background tile to empty space around rooms and corridors
 Rooms

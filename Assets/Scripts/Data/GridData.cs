@@ -17,7 +17,7 @@ public class GridData //to be json
 	public int mapDepth;
 
 	public List<RoomData> rooms;
-	public List<CorridorData> corridors;
+	//public List<CorridorData> corridors;
 	public int seed;
 
 	public GridData(Vector2Int startposition, StartGridPosition startGridPosition, int mapWidth, int mapHeight, int mapDepth)
@@ -30,7 +30,21 @@ public class GridData //to be json
 		this.mapHeight = mapHeight;
 		this.mapDepth = mapDepth;
 		rooms = new List<RoomData>();
-		corridors = new List<CorridorData>();
+		//scorridors = new List<CorridorData>();
+	}
+
+	public List<CorridorData> GetRoomsCorridorData(int roomId)
+	{
+		List<CorridorData> corridors = rooms.SelectMany(x => x.corridors).Where(x => x.startRoomID == roomId || x.endRoomID == roomId).ToList();
+		return corridors;
+	}
+
+	public List<Vector2Int> GetRoomDoorPositions(int roomId)
+	{
+		List<CorridorData> corridors = GetRoomsCorridorData(roomId);
+		List<Vector2Int> positons = corridors.Where(x => x.startRoomID == roomId).Select(x => x.corridorPositions.FirstOrDefault()).ToList();
+		positons.AddRange(corridors.Where(x => x.endRoomID == roomId).Select(x => x.corridorPositions.LastOrDefault()).ToList());
+		return positons;
 	}
 
 	public RoomData GetRoom(int id)
