@@ -22,6 +22,8 @@ public class TileMapGrid : MonoBehaviour
 	private Tilemap wallMap;
 	private Tilemap backgroundMap;
 	private GridPalette gridPalette;
+
+
 	public Vector3 GetStartRoomPosition()
 	{
 		Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);

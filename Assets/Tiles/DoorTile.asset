@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c864d5af8da2a3247850f7fb56862012, type: 3}
   m_Name: DoorTile
   m_EditorClassIdentifier: 
-  m_Sprite: {fileID: -5675400335168754034, guid: ac70385d0bb767c4db96b139a74748ee,
-    type: 3}
+  m_Sprite: {fileID: 21300000, guid: 4dda1d1e2860448f0802e2032c1e9835, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1

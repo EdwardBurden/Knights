@@ -9,8 +9,15 @@ public class WallTile : Tile
 	private const float MID_WALL_CHANCE = 0.4f;
 	private const float HIGH_WALL_CHANCE = 0.8f;
 
-	public Sprite[] m_Sprites;
-	public Sprite m_Preview;
+	public Sprite[] cornerSprites;
+
+	public Sprite[] tr_sprites;
+	public Sprite[] tl_sprites;
+	public Sprite[] br_sprites;
+	public Sprite[] bl_sprites;
+
+	//public Sprite[] m_Sprites;
+	//public Sprite m_Preview;
 	// This refreshes itself and other RoadTiles that are orthogonally and diagonally adjacent
 	public override void RefreshTile(Vector3Int location, ITilemap tilemap)
 	{
@@ -33,10 +40,10 @@ public class WallTile : Tile
 
 
 
-		int index = GetIndex((byte)mask);
-		if (index >= 0 && index < m_Sprites.Length)
+		Sprite sprite = GetSprite((byte)mask);
+		if (sprite != null)
 		{
-			tileData.sprite = m_Sprites[index];
+			tileData.sprite = sprite;
 			tileData.color = Color.white;
 			var m = tileData.transform;
 			//m.SetTRS(Vector3.zero, GetRotation((byte)mask), Vector3.one);
@@ -46,7 +53,7 @@ public class WallTile : Tile
 		}
 		else
 		{
-			Debug.LogWarning("Not enough sprites in RoadTile instance");
+			Debug.LogWarning("Missing Sprite");
 		}
 	}
 
@@ -59,7 +66,7 @@ public class WallTile : Tile
 		{
 			for (int xd = -1; xd <= 1; xd++)
 			{
-			
+
 				if (xd == 0 && yd == 0)
 				{
 					continue;
@@ -78,18 +85,52 @@ public class WallTile : Tile
 		return tilemap.GetTile(position) == this;
 	}
 	// The following determines which sprite to use based on the number of adjacent RoadTiles
-	private int GetIndex(byte mask)
+	private Sprite GetSprite(byte mask)
 	{
-		return 1;
+
 		switch (mask)
 		{
-			case 208: return 2; //Bottom Corner
-			case 104: return 3; //Right Corner
-			case 22: return 4; //Left Corner
-			case 11: return 5; //Top Corner
-			case 0: return 0; //null
-			default: return 1; //Temp for now blue floor to show is wall
+			case 7:
+			case 6:
+			case 3:
+				return SelectWallSprite(tl_sprites); //TopLeft
+
+			case 224:
+			case 192:
+			case 96:
+				return SelectWallSprite(br_sprites); ; //BottomRight
+			case 41:
+			case 40:
+			case 9:
+				return SelectWallSprite(tr_sprites); ; //TopRight
+			case 148:
+			case 144:
+			case 20:
+				return SelectWallSprite(bl_sprites); ; //BottomLeft
+
+			case 1:
+				return cornerSprites[0]; //Top Corner
+
+			case 32:
+				return cornerSprites[1]; //Corner
+
+			case 128:
+				return cornerSprites[2]; //Corner
+
+			case 4:
+				return cornerSprites[3]; //Corner
+
+
+
+			default: return null; //null
+							   //default: return 1; //Temp for now blue floor to show is wall
 		}
-		return -1;
+
+	}
+
+	private Sprite SelectWallSprite(Sprite[] sprites)
+	{
+		return sprites[0]; //implement random using griddata seed  later 
+
 	}
 }

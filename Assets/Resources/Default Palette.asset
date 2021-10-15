@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Default Palette
   m_EditorClassIdentifier: 
   roomTile: {fileID: 11400000, guid: 2e6c97ae4aab6ae43abce7cab59c648a, type: 2}
-  voidTile: {fileID: 11400000, guid: 63e8f6832925590489e98b0c7100d95f, type: 2}
+  voidTile: {fileID: 11400000, guid: 7e790b4f385f2254ebd74fb2d37e4359, type: 2}
   corridorTile: {fileID: 11400000, guid: 8779d04863be7094faa83f04acbe2a4e, type: 2}
   colliderTile: {fileID: 11400000, guid: a8c99cad3956e0d4a9ab822a24721974, type: 2}
   wallTile: {fileID: 11400000, guid: bfc41be907cbb3b46ad46679b15d50a9, type: 2}

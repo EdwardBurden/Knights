@@ -34,11 +34,16 @@ MonoBehaviour:
   m_InstancedGameObject: {fileID: 0}
   m_Flags: 0
   m_ColliderType: 0
-  m_Sprites:
-  - {fileID: 6511404109149442792, guid: ac70385d0bb767c4db96b139a74748ee, type: 3}
-  - {fileID: -5329100167500574251, guid: 2746f1c6a513eaa4e8d4e96fd1366b95, type: 3}
-  - {fileID: 2420863537438956345, guid: ac70385d0bb767c4db96b139a74748ee, type: 3}
-  - {fileID: -7366180687131401920, guid: ac70385d0bb767c4db96b139a74748ee, type: 3}
-  - {fileID: -14520863135872570, guid: ac70385d0bb767c4db96b139a74748ee, type: 3}
-  - {fileID: -5675400335168754034, guid: ac70385d0bb767c4db96b139a74748ee, type: 3}
-  m_Preview: {fileID: 0}
+  cornerSprites:
+  - {fileID: -5675400335168754034, guid: c3fd2811fac7ef24495c96aa8a927fcf, type: 3}
+  - {fileID: 2551541108661590903, guid: c3fd2811fac7ef24495c96aa8a927fcf, type: 3}
+  - {fileID: 8296322472478124191, guid: c3fd2811fac7ef24495c96aa8a927fcf, type: 3}
+  - {fileID: -3218248262026354849, guid: c3fd2811fac7ef24495c96aa8a927fcf, type: 3}
+  tr_sprites:
+  - {fileID: 7317334631700292629, guid: c3fd2811fac7ef24495c96aa8a927fcf, type: 3}
+  tl_sprites:
+  - {fileID: 2420863537438956345, guid: c3fd2811fac7ef24495c96aa8a927fcf, type: 3}
+  br_sprites:
+  - {fileID: -14520863135872570, guid: c3fd2811fac7ef24495c96aa8a927fcf, type: 3}
+  bl_sprites:
+  - {fileID: -7366180687131401920, guid: c3fd2811fac7ef24495c96aa8a927fcf, type: 3}
