@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 using static MinimumGraph;
 using Random = UnityEngine.Random;
 
-//ONLY DO TILEMAP GENERATIO HERE
-//MOVE ALL GRID PLACING INTO NEW TileMapGrid
-//HOLD GRID DATA IN TileMapGrid
 
 [ExecuteInEditMode]
-public class TileMapGenerator : MonoBehaviour
+public class TileMapGenerator : MonoBehaviour //call here to generate stuff
 {
 	private enum FacingDirection
 	{
@@ -38,29 +32,21 @@ public class TileMapGenerator : MonoBehaviour
 	public GridPalette gridPalette;
 
 	private bool[,] gridPlaced;
-	private int MAX_ATTEMPTS = 5;
+	private int MAX_ATTEMPTS = 50;
 	private List<TriangleEdge> minimumTree = new List<TriangleEdge>();
 	private List<Vector2> vertices = new List<Vector2>();
 	private List<int> indices = new List<int>();
 	private List<TriangleEdge> triangleEdges = new List<TriangleEdge>();
 
-
-	public void LoadFromFile(string fileName, string path)
+	public GridData GenerateData()
 	{
-		//import into a worlddata
-
-		//GetComponent<TileMapGrid>().LoadGrid(gridData);
-	}
-
-	public void Generate()
-	{
-		Vector2Int trueStartPosition = Helper.GetStartPosition(startGridPositionType, startposition, mapHeight, mapWidth);
+		Vector2Int trueStartPosition = Helper.GetGridStartPosition(startGridPositionType, startposition, mapHeight, mapWidth);
 		GridData gridData = GenerateGrid(startposition, trueStartPosition, topDepthAtStart);
 		gridData.seed = (int)System.DateTime.Now.Ticks;
-		GetComponent<TileMapGrid>().LoadGrid(gridData);
+		return gridData;
 	}
 
-	public GridData GenerateGrid(Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
+	private GridData GenerateGrid(Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
 	{
 		vertices.Clear();
 		indices.Clear();
@@ -155,7 +141,6 @@ public class TileMapGenerator : MonoBehaviour
 		return center;
 	}
 
-
 	private FacingDirection IsRoomFacing(RoomData source, RoomData destination)
 	{
 		List<Vector2Int> sourcePositions = new List<Vector2Int>();
@@ -230,7 +215,6 @@ public class TileMapGenerator : MonoBehaviour
 		corridorData = corridorData.Distinct().ToList();
 		return corridorData;
 	}
-
 
 	private List<TriangleEdge> GenerateTriangleEdge(List<RoomData> rooms)
 	{
@@ -315,7 +299,7 @@ public class TileMapGenerator : MonoBehaviour
 		}
 	}
 
-	public List<RoomData> GenerateRooms(Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
+	private List<RoomData> GenerateRooms(Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
 	{
 		float minDist = Vector2Int.Distance(startposition, relativeStartPosition);
 		float maxDist = Vector2Int.Distance(startposition, new Vector2Int(relativeStartPosition.x + mapWidth, relativeStartPosition.y + mapHeight));
@@ -377,6 +361,6 @@ public class TileMapGenerator : MonoBehaviour
 	{
 		float dist = Vector2Int.Distance(startposition, Vector2Int.RoundToInt(tileMapRoom.centerPosition) + relativeStartPosition);
 		int inverse = topDepthAtStart ? 1 : 0;
-		tileMapRoom.depth = Mathf.RoundToInt(Mathf.Abs(inverse - (dist / maxDistance)) * mapDepth);
+		tileMapRoom.depth = Mathf.RoundToInt(Mathf.Abs(inverse - (dist / maxDistance)) * (mapDepth - 1));
 	}
 }

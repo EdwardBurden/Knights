@@ -10,8 +10,6 @@ public class GameManager : MonoBehaviour
 	public Character characterPrefab;
 	public CharacterEntrance CharacterEntrancePrefab;
 
-	private TileMapGrid tileMapGrid;
-	private TileMapGenerator tileMapGenerator;
 
 	private void Awake()
 	{
@@ -79,15 +77,12 @@ public class GameManager : MonoBehaviour
 
 	public void OnDungeonSceneLoaded()
 	{
-		tileMapGenerator = FindObjectOfType<TileMapGenerator>();
-		tileMapGenerator.Generate();
+		TileGridManager tileGridManager = FindObjectOfType<TileGridManager>();
+		tileGridManager.CreateNewMap();
+		Vector3 cellPositon = tileGridManager.startRoomPosition;
 
-
-		tileMapGrid = FindObjectOfType<TileMapGrid>();
 		CharacterEntrance characterEntrance = Instantiate(CharacterEntrancePrefab);
 		Character character = Instantiate(characterPrefab);
-		Vector3 cellPositon = tileMapGrid.GetStartRoomPosition();
-
 		characterEntrance.Drop(character, cellPositon);
 	}
 

@@ -5,9 +5,11 @@ using UnityEngine.Tilemaps;
 [CreateAssetMenu(menuName = "Wall")]
 public class WallTile : Tile
 {
-	private const float SMALL_WALL_CHANCE = 0.1f;
+	/*private const float SMALL_WALL_CHANCE = 0.1f;
 	private const float MID_WALL_CHANCE = 0.4f;
 	private const float HIGH_WALL_CHANCE = 0.8f;
+
+	public Sprite test;
 
 	public Sprite[] cornerSprites;
 
@@ -16,36 +18,30 @@ public class WallTile : Tile
 	public Sprite[] br_sprites;
 	public Sprite[] bl_sprites;
 
-	//public Sprite[] m_Sprites;
-	//public Sprite m_Preview;
-	// This refreshes itself and other RoadTiles that are orthogonally and diagonally adjacent
 	public override void RefreshTile(Vector3Int location, ITilemap tilemap)
 	{
 		for (int yd = -1; yd <= 1; yd++)
 		{
 			for (int xd = -1; xd <= 1; xd++)
 			{
-				Vector3Int position = new Vector3Int(location.x + xd, location.y + yd, location.z);
-				if (HasWallTile(tilemap, position))
+				Vector3Int position = new Vector3Int(location.x + xd, location.y + yd, 0);
+				if (Helper.TileExistsInTileMap((Vector2Int)location, tilemap, this, 10)) ;
 					tilemap.RefreshTile(position);
 			}
 		}
 	}
-	// This determines which sprite is used based on the RoadTiles that are adjacent to it and rotates it to fit the other tiles.
-	// As the rotation is determined by the RoadTile, the TileFlags.OverrideTransform is set for the tile.
+
 	public override void GetTileData(Vector3Int location, ITilemap tilemap, ref TileData tileData)
 	{
 		int mask = GetMask(location);
-		//REMOVE THIS ONKLY FOR TESTING
-
-
-
+	
 		Sprite sprite = GetSprite((byte)mask);
 		if (sprite != null)
 		{
 			tileData.sprite = sprite;
 			tileData.color = Color.white;
 			var m = tileData.transform;
+			//set to y pos + 0 if top wall,+ 1 if bottom wall
 			//m.SetTRS(Vector3.zero, GetRotation((byte)mask), Vector3.one);
 			tileData.transform = m;
 			tileData.flags = TileFlags.LockTransform;
@@ -71,7 +67,7 @@ public class WallTile : Tile
 				{
 					continue;
 				}
-				mask += tileMapGrid.HasFloorTile(location + new Vector3Int(xd, yd, 0)) ? binary : 0;
+				mask += tileMapGrid.HasFloorTile(new Vector3Int(location.x, location.y, 0) + new Vector3Int(xd, yd, 0)) ? binary : 0;
 				binary *= 2;
 			}
 		}
@@ -79,12 +75,6 @@ public class WallTile : Tile
 
 	}
 
-	// This determines if the Tile at the position is the same RoadTile.
-	private bool HasWallTile(ITilemap tilemap, Vector3Int position)
-	{
-		return tilemap.GetTile(position) == this;
-	}
-	// The following determines which sprite to use based on the number of adjacent RoadTiles
 	private Sprite GetSprite(byte mask)
 	{
 
@@ -122,8 +112,8 @@ public class WallTile : Tile
 
 
 
-			default: return null; //null
-							   //default: return 1; //Temp for now blue floor to show is wall
+			default: return test; //null
+								  //default: return 1; //Temp for now blue floor to show is wall
 		}
 
 	}
@@ -133,4 +123,5 @@ public class WallTile : Tile
 		return sprites[0]; //implement random using griddata seed  later 
 
 	}
+	*/
 }

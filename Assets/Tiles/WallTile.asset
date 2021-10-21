@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f8de349571eea4488f867438475f4d2, type: 3}
   m_Name: WallTile
   m_EditorClassIdentifier: 
-  m_Sprite: {fileID: 21300000, guid: 9c8aaf171d4c42942aa63d0a0d7b9997, type: 3}
+  m_Sprite: {fileID: -8915613081251869208, guid: 2746f1c6a513eaa4e8d4e96fd1366b95,
+    type: 3}
   m_Color: {r: 1, g: 0.6121189, b: 0, a: 1}
   m_Transform:
     e00: 1
@@ -34,16 +35,3 @@ MonoBehaviour:
   m_InstancedGameObject: {fileID: 0}
   m_Flags: 0
   m_ColliderType: 0
-  cornerSprites:
-  - {fileID: -5675400335168754034, guid: c3fd2811fac7ef24495c96aa8a927fcf, type: 3}
-  - {fileID: 2551541108661590903, guid: c3fd2811fac7ef24495c96aa8a927fcf, type: 3}
-  - {fileID: 8296322472478124191, guid: c3fd2811fac7ef24495c96aa8a927fcf, type: 3}
-  - {fileID: -3218248262026354849, guid: c3fd2811fac7ef24495c96aa8a927fcf, type: 3}
-  tr_sprites:
-  - {fileID: 7317334631700292629, guid: c3fd2811fac7ef24495c96aa8a927fcf, type: 3}
-  tl_sprites:
-  - {fileID: 2420863537438956345, guid: c3fd2811fac7ef24495c96aa8a927fcf, type: 3}
-  br_sprites:
-  - {fileID: -14520863135872570, guid: c3fd2811fac7ef24495c96aa8a927fcf, type: 3}
-  bl_sprites:
-  - {fileID: -7366180687131401920, guid: c3fd2811fac7ef24495c96aa8a927fcf, type: 3}

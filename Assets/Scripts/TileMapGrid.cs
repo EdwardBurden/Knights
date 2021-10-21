@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 using static MinimumGraph;
 using Random = UnityEngine.Random;
-
+[Obsolete]
 [ExecuteInEditMode]
 public class TileMapGrid : MonoBehaviour
 {
@@ -23,15 +23,7 @@ public class TileMapGrid : MonoBehaviour
 	private Tilemap backgroundMap;
 	private GridPalette gridPalette;
 
-
-	public Vector3 GetStartRoomPosition()
-	{
-		Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
-		Vector2Int center = Vector2Int.RoundToInt(gridData.startRoom.centerPosition);
-		Vector3Int gridPosition = (Vector3Int)(startPos + center);
-		Vector3 positon = floorMaps[gridData.startRoom.depth].CellToWorld(gridPosition);
-		return positon;
-	}
+	private Dictionary<Vector3Int, int> wallPositonsToRoomIds = new Dictionary<Vector3Int, int>();
 
 	public bool HasFloorTile(Vector3Int position)
 	{
@@ -55,7 +47,7 @@ public class TileMapGrid : MonoBehaviour
 		doorPositions = doorPositions.Distinct().ToList();
 		foreach (var item in doorPositions)
 		{
-			Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
+			Vector2Int startPos = Helper.GetGridStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
 			Vector3Int gridPosition = (Vector3Int)(item + startPos);
 			wallMap.SetTile(gridPosition, gridPalette.doorTile);
 		}
@@ -65,7 +57,7 @@ public class TileMapGrid : MonoBehaviour
 
 	private void DrawBackground()
 	{
-		Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
+		Vector2Int startPos = Helper.GetGridStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
 		BoundsInt boundsInt = new BoundsInt(startPos.x, startPos.y, 0, gridData.mapWidth, gridData.mapHeight, 1);
 		TileBase[] tileArray = new TileBase[boundsInt.size.x * boundsInt.size.y];
 		for (int index = 0; index < tileArray.Length; index++)
@@ -94,6 +86,7 @@ public class TileMapGrid : MonoBehaviour
 		gridData = data;
 		Random.InitState(gridData.seed);
 		floorMaps.Clear();
+		wallPositonsToRoomIds.Clear();
 		var tempList = transform.Cast<Transform>().ToList();
 		foreach (Transform map in tempList)
 		{
@@ -139,7 +132,7 @@ public class TileMapGrid : MonoBehaviour
 	{
 		foreach (CorridorData corridor in roomData.corridors)
 		{
-			Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
+			Vector2Int startPos = Helper.GetGridStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
 			RoomData startRoom = gridData.GetRoom(corridor.startRoomID);
 			RoomData endRoom = gridData.GetRoom(corridor.endRoomID);
 			foreach (Vector2Int position in corridor.corridorPositions)
@@ -152,14 +145,14 @@ public class TileMapGrid : MonoBehaviour
 
 	private void AddCorridorToTile(Tilemap corridorMap, Vector2Int position)
 	{
-		Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
+		Vector2Int startPos = Helper.GetGridStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
 		Vector3Int gridPosition = (Vector3Int)(position + startPos);
 
 		if (!TileExistsOnAnyDepth(floorMaps, gridPosition))
 		{
 			corridorMap.SetTile(gridPosition, gridPalette.corridorTile);
 			PlaceOrRemoveColliderIfFloorFound(gridPosition);
-			PlaceOrRemoveWallIfFloorFound(gridPosition);
+			wallMap.SetTile(gridPosition, null);
 		}
 		AddSurroundingCollider(gridPosition);
 	}
@@ -193,16 +186,18 @@ public class TileMapGrid : MonoBehaviour
 		}
 	}
 
-	private void PlaceOrRemoveWallIfFloorFound(Vector3Int gridPosition)
+	private void PlaceOrRemoveWallIfFloorFound(Vector3Int gridPosition, int roomID)
 	{
 		bool exist = TileExistsOnAnyDepth(floorMaps, gridPosition);
 		if (!exist)
 		{
 			wallMap.SetTile(gridPosition, gridPalette.wallTile);
+			wallPositonsToRoomIds.Add(gridPosition, roomID); //not gonna work because your putting them all on 0, maybe assign z pos now, then apply when refresh is activated
 		}
 		else
 		{
 			wallMap.SetTile(gridPosition, null);
+			wallPositonsToRoomIds.Remove(gridPosition);
 		}
 	}
 
@@ -234,7 +229,7 @@ public class TileMapGrid : MonoBehaviour
 		{
 			for (int y = -1; y < room.height + 1; y++)
 			{
-				Vector2Int startPos = Helper.GetStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
+				Vector2Int startPos = Helper.GetGridStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
 				Vector3Int gridPosition = (Vector3Int)(room.position + new Vector2Int(startPos[0] + x, startPos[1] + y));
 
 				if (!(x == -1 || y == -1 || x == room.width || y == room.height))
@@ -264,7 +259,8 @@ public class TileMapGrid : MonoBehaviour
 				else
 				{
 					PlaceOrRemoveColliderIfFloorFound(gridPosition);
-					PlaceOrRemoveWallIfFloorFound(gridPosition);
+					int order = x == -1 || y == -1 ? 1 : 0;
+					PlaceOrRemoveWallIfFloorFound(gridPosition, room.roomID);
 				}
 			}
 		}

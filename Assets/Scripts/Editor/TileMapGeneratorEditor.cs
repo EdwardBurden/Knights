@@ -21,7 +21,7 @@ public class TileMapGeneratorEditor : Editor
 		if (GUILayout.Button("Generate"))
 		{
 			TileMapGenerator tileMap = target as TileMapGenerator;
-			tileMap.Generate();
+			tileMap.GetComponent<TileGridManager>().CreateNewMap();
 		}
 	}
 }

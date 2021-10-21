@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class Helper //rename later maybe
 {
@@ -33,7 +35,7 @@ public class Helper //rename later maybe
 		return mean + NextGaussian() * standard_deviation;
 	}
 
-	public static Vector2Int GetStartPosition(StartGridPosition startGridPosition, Vector2Int startposition, int height, int width)
+	public static Vector2Int GetGridStartPosition(StartGridPosition startGridPosition, Vector2Int startposition, int height, int width)
 	{
 		switch (startGridPosition)
 		{
@@ -47,6 +49,31 @@ public class Helper //rename later maybe
 				return Vector2Int.zero;
 		}
 
+	}
+
+	public static bool TileExistsInTileMap(Vector2Int position, ITilemap tilemap, TileBase tileBase, int height)
+	{
+		for (int i = 0; i < height; i++)
+		{
+			Vector3Int realPosition = new Vector3Int(position.x, position.y, height);
+			if (tilemap.GetTile(realPosition) == tileBase)
+			{
+				return true;
+			};
+		}
+		return false;
+	}
+
+	public static bool TileExistsOnAnyDepth(Dictionary<int, Tilemap> depths, Vector3Int position)
+	{
+		foreach (KeyValuePair<int, Tilemap> tilemap in depths.ToList())
+		{
+			if (tilemap.Value.GetTile(position) != null)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static Vector2Int GetCorridorDirectionFromRooms(RoomData source, RoomData destination, out Vector2Int difference)
