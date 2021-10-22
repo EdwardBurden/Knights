@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using Random = UnityEngine.Random;
 
 [ExecuteInEditMode]
@@ -26,7 +28,7 @@ public class TileGridManager : MonoBehaviour //make singleton //call here to get
 
 	public void CreateNewMap()
 	{
-		GridData gridData = tileMapGenerator.GenerateData();
+		GridData gridData = tileMapGenerator.GenerateGrid();
 		//Random.InitState(gridData.seed); for later 
 
 		tileGridPlacer.Init(gridData);
@@ -53,5 +55,5 @@ public class TileGridManager : MonoBehaviour //make singleton //call here to get
 		return positon;
 	}
 
-
+	//public bool  
 }

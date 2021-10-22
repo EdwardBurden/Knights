@@ -20,6 +20,8 @@ public class TileMapGrid : MonoBehaviour
 	private Dictionary<int, Tilemap> floorMaps = new Dictionary<int, Tilemap>();
 	private Tilemap colliderMap;
 	private Tilemap wallMap;
+
+
 	private Tilemap backgroundMap;
 	private GridPalette gridPalette;
 

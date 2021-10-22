@@ -21,6 +21,18 @@ public class TileGridPlacer : MonoBehaviour //call here to place stuff
 
 	Vector2Int gridStart => Helper.GetGridStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
 
+	public bool HasFloorTile(Vector3Int position)
+	{
+		foreach (KeyValuePair<int, Tilemap> tilemap in floorMaps.ToList())
+		{
+			if (tilemap.Value.GetTile(position) == gridPalette.roomTile)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public void Init(GridData gridData)
 	{
 		ClearGrid();
@@ -36,8 +48,6 @@ public class TileGridPlacer : MonoBehaviour //call here to place stuff
 
 		wallMap = Instantiate(wallTileMapPrefab, this.transform);
 		wallMap.name = "Wall";
-
-
 	}
 
 	private Tilemap CreateFloorMap(int order)
@@ -109,17 +119,18 @@ public class TileGridPlacer : MonoBehaviour //call here to place stuff
 
 	public void PlaceWalls()
 	{
-		foreach (RoomData room in gridData.rooms)
+		List<RoomData> orderedRooms = gridData.rooms.OrderByDescending(x => Vector2.Distance(x.position, gridStart)).ToList();
+		foreach (RoomData room in orderedRooms)
 		{
 			Vector2Int roomCorner = (room.position + gridStart) + new Vector2Int(-1, -1);
 			PlaceWall(roomCorner.x, roomCorner.y + room.height + 1, room.width + 2, 1);
-			PlaceWall(roomCorner.x, roomCorner.y, room.width + 2, 1);
-			PlaceWall(roomCorner.x, roomCorner.y, 1, room.height + 2);
-			PlaceWall(roomCorner.x + room.width + 1, roomCorner.y, 1, room.height + 2);
+			PlaceWall( roomCorner.x, roomCorner.y, room.width + 2, 1);
+			PlaceWall( roomCorner.x, roomCorner.y + 1, 1, room.height);
+			PlaceWall( roomCorner.x + room.width + 1, roomCorner.y + 1, 1, room.height);
 		}
 	}
 
-	private void PlaceWall(int x, int y, int width, int length)
+	private void PlaceWall( int x, int y, int width, int length)
 	{
 		BoundsInt wallBounds = new BoundsInt(x, y, 0, width, length, 1);
 		foreach (Vector3Int wallPosition in wallBounds.allPositionsWithin)

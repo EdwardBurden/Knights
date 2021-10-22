@@ -31,8 +31,8 @@ public class Character : MonoBehaviour
 			Tilemap tilemap = hit.GetComponent<Tilemap>();
 			if (tilemap != null)
 			{
-			//	return;//todo remove only for testing
-				targetDepth = hit.transform.position.z;
+				return;//todo remove only for testing
+				/*targetDepth = hit.transform.position.z;
 				Vector3Int cell = tilemap.WorldToCell(transform.position);
 				Tilemap wall = FindObjectOfType<TileGridPlacer>().wallMap;
 
@@ -47,6 +47,7 @@ public class Character : MonoBehaviour
 						wall.SetColor(cellPos, new Color(1,1,1,0.1f));
 					}
 				}
+				*/
 				//FindObjectOfType<TileMapGenerator>().ChangeActiveLayer(hit.GetComponent<Tilemap>());
 			}
 		}

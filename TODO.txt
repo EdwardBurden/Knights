@@ -1,11 +1,8 @@
-For walls IMPORTANT:
-Have multiple walls on same tile, then change z pos to work  
-Create generation data and then runtime data, use generation data fro generator in tilegrid placement
-New class for tilemap management with placement data 
-When wall tiles need to refresh they call manager to know hwihc room tiles to check
+Walls: do it the hard way idiot
+maybe try rule tile editor to make it easier
 Implement on room entered and on room exit which show/hide walls, same for corridors , or animated down and then bounced back up
 
-
+idea for doors//for loop each corridor, if oonly one adjacent corridor and adjacent room spawn door, set it to the room id of tile found
 
 
 General

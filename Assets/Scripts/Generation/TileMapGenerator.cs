@@ -38,16 +38,13 @@ public class TileMapGenerator : MonoBehaviour //call here to generate stuff
 	private List<int> indices = new List<int>();
 	private List<TriangleEdge> triangleEdges = new List<TriangleEdge>();
 
-	public GridData GenerateData()
-	{
-		Vector2Int trueStartPosition = Helper.GetGridStartPosition(startGridPositionType, startposition, mapHeight, mapWidth);
-		GridData gridData = GenerateGrid(startposition, trueStartPosition, topDepthAtStart);
-		gridData.seed = (int)System.DateTime.Now.Ticks;
-		return gridData;
-	}
 
-	private GridData GenerateGrid(Vector2Int startposition, Vector2Int relativeStartPosition, bool topDepthAtStart)
+
+	public GridData GenerateGrid()
 	{
+		Vector2Int relativeStartPosition = Helper.GetGridStartPosition(startGridPositionType, startposition, mapHeight, mapWidth);
+		int seed = (int)System.DateTime.Now.Ticks;
+		Random.InitState(seed);
 		vertices.Clear();
 		indices.Clear();
 		triangleEdges.Clear();
@@ -55,7 +52,7 @@ public class TileMapGenerator : MonoBehaviour //call here to generate stuff
 		gridPlaced = new bool[mapWidth, mapHeight];
 
 		GridData gridData = new GridData(startposition, startGridPositionType, mapWidth, mapHeight, mapDepth);
-
+		gridData.seed = seed;
 		gridData.rooms = GenerateRooms(startposition, relativeStartPosition, topDepthAtStart);
 		triangleEdges = GenerateTriangleEdge(gridData.rooms);
 		minimumTree = GenerateMinimumTree(triangleEdges, indices, vertices, gridData.rooms);

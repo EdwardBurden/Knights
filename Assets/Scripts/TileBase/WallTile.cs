@@ -5,7 +5,7 @@ using UnityEngine.Tilemaps;
 [CreateAssetMenu(menuName = "Wall")]
 public class WallTile : Tile
 {
-	/*private const float SMALL_WALL_CHANCE = 0.1f;
+	private const float SMALL_WALL_CHANCE = 0.1f;
 	private const float MID_WALL_CHANCE = 0.4f;
 	private const float HIGH_WALL_CHANCE = 0.8f;
 
@@ -25,8 +25,10 @@ public class WallTile : Tile
 			for (int xd = -1; xd <= 1; xd++)
 			{
 				Vector3Int position = new Vector3Int(location.x + xd, location.y + yd, 0);
-				if (Helper.TileExistsInTileMap((Vector2Int)location, tilemap, this, 10)) ;
+				if (tilemap.GetTile(position) != null)
+				{
 					tilemap.RefreshTile(position);
+				}
 			}
 		}
 	}
@@ -34,7 +36,6 @@ public class WallTile : Tile
 	public override void GetTileData(Vector3Int location, ITilemap tilemap, ref TileData tileData)
 	{
 		int mask = GetMask(location);
-	
 		Sprite sprite = GetSprite((byte)mask);
 		if (sprite != null)
 		{
@@ -55,7 +56,7 @@ public class WallTile : Tile
 
 	private int GetMask(Vector3Int location)
 	{
-		TileMapGrid tileMapGrid = FindObjectOfType<TileMapGrid>();
+		TileGridPlacer tileGridPlacer = FindObjectOfType<TileGridPlacer>();
 		int mask = 0;
 		int binary = 1;
 		for (int yd = -1; yd <= 1; yd++)
@@ -67,7 +68,7 @@ public class WallTile : Tile
 				{
 					continue;
 				}
-				mask += tileMapGrid.HasFloorTile(new Vector3Int(location.x, location.y, 0) + new Vector3Int(xd, yd, 0)) ? binary : 0;
+				mask += tileGridPlacer.HasFloorTile(new Vector3Int(location.x, location.y, 0) + new Vector3Int(xd, yd, 0)) ? binary : 0;
 				binary *= 2;
 			}
 		}
@@ -77,7 +78,7 @@ public class WallTile : Tile
 
 	private Sprite GetSprite(byte mask)
 	{
-
+	
 		switch (mask)
 		{
 			case 7:
@@ -123,5 +124,4 @@ public class WallTile : Tile
 		return sprites[0]; //implement random using griddata seed  later 
 
 	}
-	*/
 }
