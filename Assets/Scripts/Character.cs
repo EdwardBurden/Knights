@@ -28,9 +28,25 @@ public class Character : MonoBehaviour
 		if (collider.Length > 0)
 		{
 			Collider2D hit = collider.OrderBy(x => Vector3.Distance(x.gameObject.transform.position, this.transform.position)).FirstOrDefault();
-			if (hit.GetComponent<Tilemap>() != null)
+			Tilemap tilemap = hit.GetComponent<Tilemap>();
+			if (tilemap != null)
 			{
+			//	return;//todo remove only for testing
 				targetDepth = hit.transform.position.z;
+				Vector3Int cell = tilemap.WorldToCell(transform.position);
+				Tilemap wall = FindObjectOfType<TileGridPlacer>().wallMap;
+
+				tilemap.SetTileFlags(cell, TileFlags.None);
+				tilemap.SetColor(cell, Color.red);
+				for (int i = 0; i < 10; i++)
+				{
+					for (int j = 0; j < 10; j++)
+					{
+						Vector3Int cellPos = cell - new Vector3Int(i, j, 0);
+						wall.SetTileFlags(cellPos, TileFlags.None);
+						wall.SetColor(cellPos, new Color(1,1,1,0.1f));
+					}
+				}
 				//FindObjectOfType<TileMapGenerator>().ChangeActiveLayer(hit.GetComponent<Tilemap>());
 			}
 		}
