@@ -1,7 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+[Obsolete]
 [CreateAssetMenu(menuName = "Wall")]
 public class WallTile : Tile
 {
@@ -68,7 +70,7 @@ public class WallTile : Tile
 				{
 					continue;
 				}
-				mask += tileGridPlacer.HasFloorTile(new Vector3Int(location.x, location.y, 0) + new Vector3Int(xd, yd, 0)) ? binary : 0;
+			//	mask += tileGridPlacer.HasFloorTile(new Vector3Int(location.x, location.y, 0) + new Vector3Int(xd, yd, 0)) ? binary : 0;
 				binary *= 2;
 			}
 		}

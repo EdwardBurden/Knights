@@ -13,6 +13,6 @@ public class GridPalette : ScriptableObject
 	public CorridorTile corridorTile;
 
 	public ColliderTile colliderTile;
-	public WallTile wallTile;
+	public WallRuleTile wallTile;
 	public DoorTile doorTile;
 }

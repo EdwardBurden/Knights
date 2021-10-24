@@ -16,5 +16,5 @@ MonoBehaviour:
   voidTile: {fileID: 11400000, guid: 7e790b4f385f2254ebd74fb2d37e4359, type: 2}
   corridorTile: {fileID: 11400000, guid: 8779d04863be7094faa83f04acbe2a4e, type: 2}
   colliderTile: {fileID: 11400000, guid: a8c99cad3956e0d4a9ab822a24721974, type: 2}
-  wallTile: {fileID: 11400000, guid: bfc41be907cbb3b46ad46679b15d50a9, type: 2}
+  wallTile: {fileID: 11400000, guid: fcb96590734b7da4fa885bd29ca85a8c, type: 2}
   doorTile: {fileID: 11400000, guid: 0322963816a0cb94ba1dd4565fcfc03f, type: 2}

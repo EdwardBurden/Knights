@@ -21,11 +21,23 @@ public class TileGridPlacer : MonoBehaviour //call here to place stuff
 
 	Vector2Int gridStart => Helper.GetGridStartPosition(gridData.startGridPosition, gridData.startposition, gridData.mapHeight, gridData.mapWidth);
 
-	public bool HasFloorTile(Vector3Int position)
+	public bool HasRoomTile(Vector3Int position)
 	{
 		foreach (KeyValuePair<int, Tilemap> tilemap in floorMaps.ToList())
 		{
 			if (tilemap.Value.GetTile(position) == gridPalette.roomTile)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool HasCorrdiorTile(Vector3Int position)
+	{
+		foreach (KeyValuePair<int, Tilemap> tilemap in floorMaps.ToList())
+		{
+			if (tilemap.Value.GetTile(position) == gridPalette.corridorTile)
 			{
 				return true;
 			}
